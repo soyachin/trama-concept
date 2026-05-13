@@ -53,7 +53,7 @@ export function TramaGraph() {
     [nodes, edges],
   );
 
-  const p5Ref = useGraphSimulation(
+  useGraphSimulation(
     containerRef,
     nodes,
     edges,
@@ -62,7 +62,6 @@ export function TramaGraph() {
   );
 
   useGraphInteraction(
-    p5Ref,
     containerRef,
     nodes,
     stateRef,

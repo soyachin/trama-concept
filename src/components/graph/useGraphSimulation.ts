@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import p5 from "p5";
 import * as d3 from "d3-force";
 import type { TNode, TEdge } from "../../types/graph";
@@ -30,7 +30,6 @@ export function useGraphSimulation(
   searchRef: React.RefObject<string>,
   stateRef: React.MutableRefObject<SimulationState>,
 ) {
-  const p5Ref = useRef<p5 | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -186,9 +185,6 @@ export function useGraphSimulation(
       }
     }, containerRef.current!);
 
-    p5Ref.current = instance;
     return () => instance.remove();
   }, [containerRef, nodes, edges, searchRef, stateRef]);
-
-  return p5Ref;
 }

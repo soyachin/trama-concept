@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import type p5 from "p5";
+import { useEffect, useRef } from "react";
 import type { TNode } from "../../types/graph";
 import type { SimulationState } from "./useGraphSimulation";
 
@@ -21,10 +20,10 @@ function hitTest(
   my: number,
   nodes: TNode[],
   s: SimulationState,
-  width: number,
-  height: number,
+  canvasW: number,
+  canvasH: number,
 ): TNode | null {
-  const [gx, gy] = toGraph(mx, my, s, width, height);
+  const [gx, gy] = toGraph(mx, my, s, canvasW, canvasH);
   for (const n of nodes) {
     const dx = gx - n.x,
       dy = gy - n.y;
@@ -34,49 +33,72 @@ function hitTest(
 }
 
 export function useGraphInteraction(
-  p5Ref: React.RefObject<p5 | null>,
   containerRef: React.RefObject<HTMLDivElement | null>,
   nodes: TNode[],
   stateRef: React.MutableRefObject<SimulationState>,
   setPanelNode: (node: TNode | null) => void,
 ) {
+  const prevMouseRef = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
-    const p = p5Ref.current;
-    if (!p) return;
+    const el = containerRef.current;
+    if (!el) return;
     const s = stateRef.current;
 
-    p.mouseMoved = () => {
-      if (s.intro !== "done") return;
-      const n = hitTest(p.mouseX, p.mouseY, nodes, s, p.width, p.height);
-      s.hovId = n ? n.id : null;
-      if (containerRef.current)
-        containerRef.current.style.cursor = n ? "pointer" : "default";
+    const getCanvas = () => el.querySelector("canvas");
+
+    const canvasCoords = (e: MouseEvent): [number, number] => {
+      const cv = getCanvas();
+      if (!cv) return [e.clientX, e.clientY];
+      const rect = cv.getBoundingClientRect();
+      return [
+        ((e.clientX - rect.left) / rect.width) * cv.width,
+        ((e.clientY - rect.top) / rect.height) * cv.height,
+      ];
     };
 
-    p.mousePressed = () => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (s.intro !== "done") return;
+      const [mx, my] = canvasCoords(e);
+      prevMouseRef.current = { x: mx, y: my };
+      const cv = getCanvas();
+      if (!cv) return;
+      const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
+      s.hovId = n ? n.id : null;
+      el.style.cursor = n ? "pointer" : "default";
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
       if (s.intro !== "done") {
         s.intro = "dissolving";
         return;
       }
-      const n = hitTest(p.mouseX, p.mouseY, nodes, s, p.width, p.height);
+      const [mx, my] = canvasCoords(e);
+      prevMouseRef.current = { x: mx, y: my };
+      const cv = getCanvas();
+      if (!cv) return;
+      const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
       if (n) {
         s.dragNode = n;
         s.dragging = false;
       } else {
         s.dragging = false;
-        s.dStartX = p.mouseX;
-        s.dStartY = p.mouseY;
+        s.dStartX = mx;
+        s.dStartY = my;
       }
     };
 
-    p.mouseReleased = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (s.intro !== "done") return;
+      const [mx, my] = canvasCoords(e);
       if (s.dragNode) {
         s.simulation?.alphaTarget(0);
         s.dragNode = null;
       }
       if (!s.dragging) {
-        const n = hitTest(p.mouseX, p.mouseY, nodes, s, p.width, p.height);
+        const cv = getCanvas();
+        if (!cv) return;
+        const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
         if (n) {
           if (s.selId === n.id) {
             s.selId = null;
@@ -93,44 +115,45 @@ export function useGraphInteraction(
       s.dragging = false;
     };
 
-    p.mouseDragged = () => {
+    const onDrag = (e: MouseEvent) => {
       if (s.intro !== "done") return;
+      if (!(e.buttons & 1)) return;
+      const [mx, my] = canvasCoords(e);
+      const movedX = mx - prevMouseRef.current.x;
+      const movedY = my - prevMouseRef.current.y;
+      prevMouseRef.current = { x: mx, y: my };
+
       if (s.dragNode) {
-        s.dragNode.x += p.movedX / s.zoom;
-        s.dragNode.y += p.movedY / s.zoom;
+        s.dragNode.x += movedX / s.zoom;
+        s.dragNode.y += movedY / s.zoom;
         s.dragNode.vx = 0;
         s.dragNode.vy = 0;
         s.simulation?.alphaTarget(0.3).restart();
       } else {
-        if (
-          !s.dragging &&
-          Math.hypot(p.mouseX - s.dStartX, p.mouseY - s.dStartY) > 5
-        ) {
+        const dx = mx - s.dStartX;
+        const dy = my - s.dStartY;
+        if (!s.dragging && Math.hypot(dx, dy) > 5) {
           s.dragging = true;
         }
         if (s.dragging) {
-          s.panX += p.movedX;
-          s.panY += p.movedY;
+          s.panX += movedX;
+          s.panY += movedY;
         }
       }
     };
 
-    p.mouseWheel = (e: WheelEvent) => {
-      if (s.intro !== "done") return false as never;
+    const onWheel = (e: WheelEvent) => {
+      if (s.intro !== "done") return;
+      e.preventDefault();
       const delta = -e.deltaY * 0.001;
       s.zoom = Math.max(0.22, Math.min(3.8, s.zoom + delta));
-      return false as never;
     };
 
-    // Touch events for mobile (pinch zoom + pan)
     let lastTouchDist = 0;
     let lastTouchX = 0;
     let lastTouchY = 0;
 
-    const el = containerRef.current;
-    if (!el) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
+    const onTouchStart = (e: TouchEvent) => {
       if (s.intro !== "done") {
         s.intro = "dissolving";
         return;
@@ -144,7 +167,7 @@ export function useGraphInteraction(
       }
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
+    const onTouchMove = (e: TouchEvent) => {
       if (s.intro !== "done") return;
       if (e.touches.length === 2) {
         e.preventDefault();
@@ -168,12 +191,22 @@ export function useGraphInteraction(
       }
     };
 
-    el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("mousemove", onMouseMove);
+    el.addEventListener("mousedown", onMouseDown);
+    el.addEventListener("mouseup", onMouseUp);
+    el.addEventListener("mousemove", onDrag);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("mousemove", onMouseMove);
+      el.removeEventListener("mousedown", onMouseDown);
+      el.removeEventListener("mouseup", onMouseUp);
+      el.removeEventListener("mousemove", onDrag);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
     };
-  }, [p5Ref, containerRef, nodes, stateRef, setPanelNode]);
+  }, [containerRef, nodes, stateRef, setPanelNode]);
 }
