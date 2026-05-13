@@ -1,0 +1,19 @@
+:root {
+  --color-bg: #0f0e0b;
+  --color-bg-panel: rgba(10,9,7,0.96);
+  --color-bg-input: rgba(12,11,8,0.9);
+  --color-fg: #f0ede4;
+  --color-accent: #c8753a;
+  --color-accent-border: rgba(200,117,58,0.33);
+  --color-border-subtle: rgba(240,237,228,0.08);
+  --color-border: rgba(240,237,228,0.18);
+  --color-node-club: #6366f1;
+  --color-node-curso: #22c55e;
+  --color-node-docente: #f59e0b;
+  --color-node-tesis: #a855f7;
+  --color-node-proyecto: #ef4444;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+  --panel-width: 292px;
+  --transition-panel: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
