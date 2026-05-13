@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { TNode } from '../types/graph'
+import type { TNode } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
   alianzaCon: 'alianza con',
