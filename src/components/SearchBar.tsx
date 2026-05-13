@@ -7,7 +7,8 @@ interface SearchBarProps {
 export function SearchBar({ value, onChange, offset }: SearchBarProps) {
   return (
     <div style={{
-      position: 'absolute', bottom: 26,
+      position: 'absolute',
+      bottom: 26,
       left: offset ? 'calc(50% - 146px)' : '50%',
       transform: offset ? 'none' : 'translateX(-50%)',
       zIndex: 20,
