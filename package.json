@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "tsc -b config/tsconfig.json && vite build",
+    "lint": "eslint --config config/eslint.config.js .",
     "preview": "vite preview"
   },
   "dependencies": {
