@@ -52,8 +52,8 @@ export function useGraphInteraction(
       if (!cv) return [e.clientX, e.clientY];
       const rect = cv.getBoundingClientRect();
       return [
-        ((e.clientX - rect.left) / rect.width) * cv.width,
-        ((e.clientY - rect.top) / rect.height) * cv.height,
+        ((e.clientX - rect.left) / rect.width) * cv.clientWidth,
+        ((e.clientY - rect.top) / rect.height) * cv.clientHeight,
       ];
     };
 
@@ -63,7 +63,7 @@ export function useGraphInteraction(
       prevMouseRef.current = { x: mx, y: my };
       const cv = getCanvas();
       if (!cv) return;
-      const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
+      const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
       s.hovId = n ? n.id : null;
       el.style.cursor = n ? "pointer" : "default";
     };
@@ -77,7 +77,7 @@ export function useGraphInteraction(
       prevMouseRef.current = { x: mx, y: my };
       const cv = getCanvas();
       if (!cv) return;
-      const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
+      const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
       if (n) {
         s.dragNode = n;
         s.dragging = false;
@@ -98,7 +98,7 @@ export function useGraphInteraction(
       if (!s.dragging) {
         const cv = getCanvas();
         if (!cv) return;
-        const n = hitTest(mx, my, nodes, s, cv.width, cv.height);
+        const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
         if (n) {
           if (s.selId === n.id) {
             s.selId = null;
@@ -191,6 +191,30 @@ export function useGraphInteraction(
       }
     };
 
+    const onTouchEnd = (e: TouchEvent) => {
+      if (s.intro !== "done") return;
+      if (e.changedTouches.length === 1 && e.touches.length === 0) {
+        const t = e.changedTouches[0];
+        const rect = el.getBoundingClientRect();
+        const mx = ((t.clientX - rect.left) / rect.width) * el.clientWidth;
+        const my = ((t.clientY - rect.top) / rect.height) * el.clientHeight;
+        const cv = getCanvas();
+        const n = hitTest(mx, my, nodes, s, cv?.clientWidth ?? el.clientWidth, cv?.clientHeight ?? el.clientHeight);
+        if (n) {
+          if (s.selId === n.id) {
+            s.selId = null;
+            setPanelNode(null);
+          } else {
+            s.selId = n.id;
+            setPanelNode(n);
+          }
+        } else {
+          s.selId = null;
+          setPanelNode(null);
+        }
+      }
+    };
+
     el.addEventListener("mousemove", onMouseMove);
     el.addEventListener("mousedown", onMouseDown);
     el.addEventListener("mouseup", onMouseUp);
@@ -198,6 +222,7 @@ export function useGraphInteraction(
     el.addEventListener("wheel", onWheel, { passive: false });
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
       el.removeEventListener("mousemove", onMouseMove);
@@ -207,6 +232,7 @@ export function useGraphInteraction(
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
     };
   }, [containerRef, nodes, stateRef, setPanelNode]);
 }
