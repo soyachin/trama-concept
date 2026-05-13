@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { TNode } from '../types/graph'
+import type { TNode } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
   alianzaCon: 'alianza con',
@@ -40,7 +40,8 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
       bottom: 0,
       width: 'var(--panel-width)',
       background: 'var(--color-bg-panel)',
-      borderLeft: '1px solid var(--color-border-subtle)',
+      borderLeft: '1px solid var(--color-border-visible)',
+      boxShadow: 'var(--shadow-panel)',
       padding: '26px 20px',
       color: 'var(--color-fg)',
       overflowY: 'auto',

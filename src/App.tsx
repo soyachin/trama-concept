@@ -1,4 +1,4 @@
-import { TramaGraph } from './components/TramaGraph'
+import { TramaGraph } from './components/graph/TramaGraph'
 
 function App() {
   return <TramaGraph />
