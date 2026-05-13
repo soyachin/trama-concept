@@ -13,6 +13,10 @@ export function SearchBar({ value, onChange, offset }: SearchBarProps) {
       transform: offset ? 'none' : 'translateX(-50%)',
       zIndex: 20,
       transition: 'left 0.35s cubic-bezier(0.22,1,0.36,1)',
+      background: 'var(--color-bg-elevated)',
+      border: '1px solid var(--color-border-visible)',
+      borderRadius: 4,
+      boxShadow: 'var(--shadow-ui)',
     }}>
       <input
         type="text"
@@ -20,8 +24,8 @@ export function SearchBar({ value, onChange, offset }: SearchBarProps) {
         onChange={e => onChange(e.target.value)}
         placeholder="buscar nodos..."
         style={{
-          background: 'var(--color-bg-input)',
-          border: '1px solid var(--color-border)',
+          background: 'transparent',
+          border: 'none',
           color: 'var(--color-fg)',
           padding: '9px 18px',
           fontFamily: 'var(--font-mono)',

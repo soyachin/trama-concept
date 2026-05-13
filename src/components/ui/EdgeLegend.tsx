@@ -10,8 +10,13 @@ export function EdgeLegend() {
       gap: 5,
       fontFamily: 'var(--font-mono)',
       fontSize: 8.5,
-      color: 'color-mix(in srgb, var(--color-fg) 28%, transparent)',
+      color: 'color-mix(in srgb, var(--color-fg) 72%, transparent)',
       lineHeight: 1.6,
+      background: 'var(--color-bg-elevated)',
+      border: '1px solid var(--color-border-visible)',
+      borderRadius: 4,
+      padding: '10px 14px',
+      boxShadow: 'var(--shadow-ui)',
     }}>
       <span>— —  alianza</span>
       <span>· · ·  cubre tema</span>
