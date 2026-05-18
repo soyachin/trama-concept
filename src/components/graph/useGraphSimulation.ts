@@ -64,17 +64,31 @@ export function useGraphSimulation(
           })
           .filter(Boolean) as { source: TNode; target: TNode }[];
 
-        // Tuned force params for large graph
-        const chargeStr = nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
-        const linkDist = nodes.length > 500 ? 80 : 120;
+        // Detect quipu mode by presence of synthetic structural nodes.
+        const hasSynthetic = nodes.some(n => n.synthetic);
+
+        // Tuned force params: quipu mode has a pinned scaffold so we can
+        // afford stronger repulsion on free nodes for breathing room.
+        const chargeStr = hasSynthetic
+          ? -180
+          : nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
+        const linkDist = hasSynthetic
+          ? 70
+          : nodes.length > 500 ? 80 : 120;
+        const linkStr = hasSynthetic ? 0.04 : 0.008;
 
         s.simulation = d3
           .forceSimulation(nodes)
-          .force("link", d3.forceLink(links).distance(linkDist).strength(0.008))
+          .force("link", d3.forceLink(links).distance(linkDist).strength(linkStr))
           .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(600))
-          .force("center", d3.forceCenter(p.width / 2, p.height / 2))
-          .force("collide", d3.forceCollide(12))
+          .force("collide", d3.forceCollide(14))
           .alphaDecay(0.025);
+        // In quipu mode the pinned root + area headers anchor the layout;
+        // adding a centering force would tug everything inward and erase
+        // the radial structure.
+        if (!hasSynthetic) {
+          s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
+        }
         s.simulation.on("tick", () => {});
       };
 

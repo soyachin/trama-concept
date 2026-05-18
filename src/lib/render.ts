@@ -138,10 +138,20 @@ export function drawKnot(
   n: TNode, t: number,
   hov: boolean, sel: boolean, alpha: number, zoom: number,
 ) {
+  // Raíz sintética: solo tipografía, sin nudo ni halo. Es el ancla
+  // visual del quipu social, no un nodo del grafo.
+  if (n.type === 'Root') {
+    drawRootLabel(ctx, n, alpha, zoom)
+    return
+  }
+
   const typeColor = TYPE_COLORS[n.type] ?? '#6366f1'
   const [cr, cg, cb] = rgb(typeColor)
 
-  const baseR = n.type === 'Club' ? 13
+  const baseR = n.type === 'AreaHeader' ? 15
+    : n.type === 'OrganizacionEstudiantil' ? 13
+    : n.type === 'Club' ? 12
+    : n.type === 'Actividad' ? 9
     : n.type === 'Carrera' ? 14
     : n.type === 'Departamento' ? 13
     : n.type === 'Laboratorio' ? 12
@@ -194,9 +204,14 @@ export function drawKnot(
   } else {
     // Full detail knot shapes per type
     switch (n.type) {
+      case 'AreaHeader':
+      case 'OrganizacionEstudiantil':
       case 'Club':
       case 'Carrera':
         drawKnotClub(ctx, R, cr, cg, cb, alpha, t, hov || sel)
+        break
+      case 'Actividad':
+        drawKnotActividad(ctx, R, cr, cg, cb, alpha, t)
         break
       case 'Curso':
         drawKnotCurso(ctx, R, cr, cg, cb, alpha)
@@ -224,14 +239,64 @@ export function drawKnot(
 
   // Label — skip at very low zoom
   if (zoom > 0.35) {
+    const isHeader = n.type === 'AreaHeader'
     const labelCol = sel ? ACC : FG
     const [lr, lg, lb] = rgb(labelCol)
-    ctx.font = `italic ${zoom > 0.7 ? 12 : 10}px 'Cormorant Garamond', Georgia, serif`
+    const sz = isHeader
+      ? (zoom > 0.7 ? 14 : 11)
+      : (zoom > 0.7 ? 12 : 10)
+    ctx.font = `${isHeader ? '' : 'italic '}${sz}px 'Cormorant Garamond', Georgia, serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
+    ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
     ctx.fillText(n.label, n.x, n.y + R + 6)
   }
+}
+
+// Raíz del quipu: tipografía "comunidad UTEC" centrada, sin svgs, sin
+// imágenes. Es el ancla simbólica del grafo.
+function drawRootLabel(
+  ctx: CanvasRenderingContext2D,
+  n: TNode, alpha: number, zoom: number,
+) {
+  if (zoom < 0.25) return
+  const [lr, lg, lb] = rgb(FG)
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
+  ctx.font = `italic ${size}px 'Cormorant Garamond', Georgia, serif`
+  ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
+  ctx.fillText(n.label, n.x, n.y - size * 0.05)
+  // Línea decorativa debajo
+  const [ar, ag, ab] = rgb(ACC)
+  ctx.beginPath()
+  ctx.moveTo(n.x - size * 1.6, n.y + size * 0.85)
+  ctx.lineTo(n.x + size * 1.6, n.y + size * 0.85)
+  ctx.strokeStyle = `rgba(${ar},${ag},${ab},${alpha * 0.55})`
+  ctx.lineWidth = 0.8
+  ctx.stroke()
+  ctx.restore()
+}
+
+function drawKnotActividad(
+  ctx: CanvasRenderingContext2D, R: number,
+  cr: number, cg: number, cb: number, alpha: number, t: number,
+) {
+  ctx.save()
+  ctx.rotate(t * 0.05)
+  ctx.beginPath()
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2
+    const r = i % 2 === 0 ? R : R * 0.55
+    const x = Math.cos(ang) * r
+    const y = Math.sin(ang) * r
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+  }
+  ctx.closePath()
+  ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.78})`
+  ctx.fill()
+  ctx.restore()
 }
 
 // ─── Knot shape functions ───────────────────────────────────────

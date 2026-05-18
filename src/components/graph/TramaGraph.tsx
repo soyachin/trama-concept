@@ -1,12 +1,15 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import type { TNode, TEdge } from "../../types/graph";
-import { fetchGraph, getDummyGraph } from "../../data/graph";
+import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
+import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
 import { OverlayLayer } from "../overlay/OverlayLayer";
 import { InfoPanel } from "../ui/InfoPanel";
 import { SearchBar } from "../ui/SearchBar";
 import { RopeLegend } from "../ui/EdgeLegend";
+import { QuipuSelector } from "../ui/QuipuSelector";
+
+const DEFAULT_QUIPU_ID = "social";
 
 export function TramaGraph() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -17,33 +20,57 @@ export function TramaGraph() {
     searchRef.current = searchVal;
   }, [searchVal]);
 
+  const [quipus, setQuipus] = useState<QuipuSummary[]>([]);
+  const [activeQuipuId, setActiveQuipuId] = useState<string>(DEFAULT_QUIPU_ID);
   const [nodes, setNodes] = useState<TNode[]>([]);
   const [edges, setEdges] = useState<TEdge[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ nodes: 0, edges: 0 });
 
+  // Lista de quipus disponibles (top-bar). Si falla, deja la lista vacía
+  // y el QuipuSelector solo muestra los ghosts de "próximamente".
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const data = await fetchGraph();
-        if (cancelled) return;
-        setNodes(data.nodes);
-        setEdges(data.edges);
-        setStats({ nodes: data.nodes.length, edges: data.edges.length });
+        const data = await fetchQuipus();
+        if (!cancelled) setQuipus(data);
       } catch {
-        console.warn("API unavailable, using fallback dummy data");
-        const data = getDummyGraph();
+        // backend offline -> ghosts only
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await fetchQuipuGraph(activeQuipuId);
         if (cancelled) return;
         setNodes(data.nodes);
         setEdges(data.edges);
-        setStats({ nodes: data.nodes.length, edges: data.edges.length });
+        setStats({
+          nodes: data.nodes.filter(n => !n.synthetic).length,
+          edges: data.edges.filter(e => !e.synthetic).length,
+        });
+      } catch {
+        console.warn("API unavailable, using fallback quipu data");
+        const data = getDummyQuipuGraph();
+        if (cancelled) return;
+        setNodes(data.nodes);
+        setEdges(data.edges);
+        setStats({
+          nodes: data.nodes.filter(n => !n.synthetic).length,
+          edges: data.edges.filter(e => !e.synthetic).length,
+        });
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [activeQuipuId]);
 
   const stateRef = useRef<SimulationState>({
     time: 0,
@@ -62,13 +89,16 @@ export function TramaGraph() {
     simulation: null,
   });
 
-  // Build adjacency + edge lookup once
+  // Build adjacency + edge lookup once. Excluye edges sintéticas (raíz →
+  // área → nodo) del panel de conexiones — son estructurales del quipu,
+  // no relaciones semánticas del individuo.
   const edgeIndex = useRef(new Map<string, { predicate: string; id: string; label: string }[]>());
   useEffect(() => {
     const idx = new Map<string, { predicate: string; id: string; label: string }[]>();
     const nodeMap = new Map<string, TNode>();
     for (const n of nodes) nodeMap.set(n.id, n);
     for (const e of edges) {
+      if (e.synthetic) continue;
       const srcLabel = nodeMap.get(e.source)?.label ?? '';
       const tgtLabel = nodeMap.get(e.target)?.label ?? '';
       if (!idx.has(e.source)) idx.set(e.source, []);
@@ -144,6 +174,11 @@ export function TramaGraph() {
         <div style={{ pointerEvents: "auto" }}>
           <RopeLegend />
         </div>
+        <QuipuSelector
+          quipus={quipus}
+          activeId={activeQuipuId}
+          onSelect={setActiveQuipuId}
+        />
       </OverlayLayer>
 
       {/* Wordmark */}
@@ -172,14 +207,15 @@ export function TramaGraph() {
           top: 18,
           right: 18,
           zIndex: 20,
-          fontFamily: "var(--font-mono)",
-          fontSize: 8.5,
-          color: "color-mix(in srgb, var(--color-fg) 20%, transparent)",
-          letterSpacing: "0.1em",
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 10,
+          color: "rgba(240,237,228,0.38)",
+          letterSpacing: "0.08em",
+          textAlign: "right",
           pointerEvents: "none",
         }}
       >
-        {stats.nodes} nodos &middot; {stats.edges} aristas
+        {stats.nodes} nudos · {stats.edges} cuerdas
       </div>
     </div>
   );

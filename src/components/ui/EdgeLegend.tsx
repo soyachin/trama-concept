@@ -2,13 +2,11 @@ import { useRef, useEffect } from 'react'
 import { ROPE_CONFIGS } from '../../config/visuals'
 
 const LEGEND_ITEMS = [
-  { pred: 'participaEn',  label: 'participa en' },
-  { pred: 'alianzaCon',   label: 'alianza' },
-  { pred: 'miembroDe',    label: 'miembro de' },
-  { pred: 'investigaEn',  label: 'investiga en' },
-  { pred: 'dictadoPor',   label: 'dictado por' },
-  { pred: 'perteneceA',   label: 'pertenece a' },
-  { pred: 'ubicadoEn',    label: 'ubicado en' },
+  { pred: 'quipu',           label: 'quipu' },
+  { pred: 'perteneceArea',   label: 'pertenece a área' },
+  { pred: 'alianzaCon',      label: 'alianza' },
+  { pred: 'organizadoPor',   label: 'organizado por' },
+  { pred: 'coorganizadoPor', label: 'coorganizado' },
 ]
 
 export function RopeLegend() {
