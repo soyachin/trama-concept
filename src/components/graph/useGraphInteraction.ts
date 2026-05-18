@@ -81,9 +81,11 @@ export function useGraphInteraction(
       const cv = getCanvas();
       if (!cv) return;
       const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
-      // Los nudos cabecera de área están pinneados al layout y no
-      // deben arrastrarse — la raíz ya quedó filtrada por hitTest.
-      if (n && !n.synthetic) {
+      // Los nudos pinneados (raíz, area headers, knots del pendant en modo
+      // quipu) tienen fx/fy y no deben arrastrarse — solo pan. La selección
+      // sigue funcionando vía onMouseUp aunque dragNode quede nulo.
+      const isPinned = n != null && n.fx != null && n.fy != null;
+      if (n && !n.synthetic && !isPinned) {
         s.dragNode = n;
         s.dragging = false;
       } else {

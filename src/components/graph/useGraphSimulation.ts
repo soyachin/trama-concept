@@ -4,7 +4,7 @@ import * as d3 from "d3-force";
 import type { TNode, TEdge } from "../../types/graph";
 import { BG, BAYER } from "../../config/visuals";
 import { initLayout } from "../../lib/layout";
-import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
+import { drawRope, drawKnot, drawCord, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
 
 export interface SimulationState {
   time: number;
@@ -47,6 +47,17 @@ export function useGraphSimulation(
       adj.get(e.target)!.add(e.source);
     }
 
+    // Detect quipu mode by presence of synthetic structural nodes.
+    const hasSynthetic = nodes.some(n => n.synthetic);
+    // Pre-compute pendant tail Y per area (max y among orgs in that area).
+    const areaHeaders = nodes.filter(n => n.type === 'AreaHeader');
+    const tailYByArea = new Map<string, number>();
+    for (const n of nodes) {
+      if (n.synthetic || !n.groupKey) continue;
+      const cur = tailYByArea.get(n.groupKey) ?? -Infinity;
+      if (n.y > cur) tailYByArea.set(n.groupKey, n.y);
+    }
+
     const instance = new p5((p: p5) => {
       p.setup = () => {
         const w = window.innerWidth;
@@ -55,6 +66,23 @@ export function useGraphSimulation(
         cnv.parent(containerRef.current!);
         p.randomSeed(42);
         initLayout(nodes, p.width, p.height);
+
+        // Re-collect tails post-layout (positions changed).
+        tailYByArea.clear();
+        for (const n of nodes) {
+          if (n.synthetic || !n.groupKey) continue;
+          const cur = tailYByArea.get(n.groupKey) ?? -Infinity;
+          if (n.y > cur) tailYByArea.set(n.groupKey, n.y);
+        }
+
+        // En modo quipu todos los nodos quedan pinneados por el layout y
+        // la simulación no aporta nada: las alianzas se dibujan estáticas
+        // entre posiciones fijas, sin tugging. Skipping para ahorrar CPU.
+        if (hasSynthetic) {
+          s.simulation = null;
+          return;
+        }
+
         const links = edges
           .map((e) => {
             const src = nodeMap.get(e.source);
@@ -64,31 +92,17 @@ export function useGraphSimulation(
           })
           .filter(Boolean) as { source: TNode; target: TNode }[];
 
-        // Detect quipu mode by presence of synthetic structural nodes.
-        const hasSynthetic = nodes.some(n => n.synthetic);
-
-        // Tuned force params: quipu mode has a pinned scaffold so we can
-        // afford stronger repulsion on free nodes for breathing room.
-        const chargeStr = hasSynthetic
-          ? -180
-          : nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
-        const linkDist = hasSynthetic
-          ? 70
-          : nodes.length > 500 ? 80 : 120;
-        const linkStr = hasSynthetic ? 0.04 : 0.008;
+        const chargeStr = nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
+        const linkDist = nodes.length > 500 ? 80 : 120;
+        const linkStr = 0.008;
 
         s.simulation = d3
           .forceSimulation(nodes)
           .force("link", d3.forceLink(links).distance(linkDist).strength(linkStr))
           .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(600))
           .force("collide", d3.forceCollide(14))
+          .force("center", d3.forceCenter(p.width / 2, p.height / 2))
           .alphaDecay(0.025);
-        // In quipu mode the pinned root + area headers anchor the layout;
-        // adding a centering force would tug everything inward and erase
-        // the radial structure.
-        if (!hasSynthetic) {
-          s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
-        }
         s.simulation.on("tick", () => {});
       };
 
@@ -126,20 +140,54 @@ export function useGraphSimulation(
 
         const q = searchRef.current.toLowerCase().trim();
 
-        // Draw edges (with viewport culling)
+        // ─── Cuerdas estructurales del quipu (modo social) ─────────
+        // Dibujadas como una capa propia DEBAJO de los nodos: una cuerda
+        // primaria horizontal que une los area headers, y un pendant cord
+        // vertical por área que baja desde el header hasta la última org.
+        // Las edges sintéticas (quipu, perteneceArea) NO se dibujan con
+        // drawRope — esta capa las reemplaza visualmente.
+        if (hasSynthetic && areaHeaders.length > 0) {
+          const sorted = [...areaHeaders].sort((a, b) => a.x - b.x);
+          const cordY = sorted[0].y;
+          const cordX1 = sorted[0].x - 24;
+          const cordX2 = sorted[sorted.length - 1].x + 24;
+          drawCord(
+            ctx, cordX1, cordY, cordX2, cordY,
+            s.time, 0.92, s.zoom, 0.7,
+            { strands: 5, spread: 3.0, weight: 1.7, twist: 0.4, sagAmount: 0.012 },
+          );
+          for (const header of sorted) {
+            const gk = header.groupKey;
+            if (!gk) continue;
+            const tailY = (tailYByArea.get(gk) ?? header.y + 70) + 22;
+            drawCord(
+              ctx, header.x, header.y + 6, header.x, tailY,
+              s.time, 0.85, s.zoom, header.x * 0.013 + 1.3,
+              { strands: 3, spread: 2.2, weight: 1.25, twist: 0.55, sagAmount: 0.025 },
+            );
+          }
+        }
+
+        // Draw edges (with viewport culling).
+        // En modo quipu las alianzas/eventos/etc. están OCULTAS hasta que
+        // el usuario hover/click sobre uno de sus endpoints — entonces se
+        // revelan y cruzan los pendants horizontalmente, mostrando el
+        // tejido del quipu social.
         for (const e of edges) {
+          if (e.synthetic) continue; // estructural: reemplazado por drawCord arriba
+
           const src = nodeMap.get(e.source);
           const tgt = nodeMap.get(e.target);
           if (!src || !tgt) continue;
 
-          // Viewport culling for edges
+          const involvesSel = s.selId != null && (s.selId === e.source || s.selId === e.target);
+          const involvesHov = s.hovId != null && (s.hovId === e.source || s.hovId === e.target);
+
+          if (hasSynthetic && !involvesSel && !involvesHov) continue;
+
           if (!edgeInViewport(src, tgt, margin, vx1, vy1, vx2, vy2)) continue;
 
-          const active =
-            s.hovId === e.source ||
-            s.hovId === e.target ||
-            s.selId === e.source ||
-            s.selId === e.target;
+          const active = involvesSel || involvesHov;
           const mSrc =
             !q ||
             src.label.toLowerCase().includes(q) ||

@@ -240,21 +240,36 @@ export function drawKnot(
   // Label — skip at very low zoom
   if (zoom > 0.35) {
     const isHeader = n.type === 'AreaHeader'
+    // En modo quipu, los knots cuelgan de un pendant cord vertical; el
+    // label va a la derecha para no chocar con el cord ni con el knot
+    // de arriba/abajo. Headers van encima de la cuerda primaria.
+    const isPendantKnot = n.fx != null && n.fy != null && !n.synthetic && !isHeader
     const labelCol = sel ? ACC : FG
     const [lr, lg, lb] = rgb(labelCol)
     const sz = isHeader
       ? (zoom > 0.7 ? 14 : 11)
       : (zoom > 0.7 ? 12 : 10)
     ctx.font = `${isHeader ? '' : 'italic '}${sz}px 'Cormorant Garamond', Georgia, serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'top'
     ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
-    ctx.fillText(n.label, n.x, n.y + R + 6)
+    if (isHeader) {
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText(n.label, n.x, n.y - R - 8)
+    } else if (isPendantKnot) {
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(n.label, n.x + R + 7, n.y)
+    } else {
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'top'
+      ctx.fillText(n.label, n.x, n.y + R + 6)
+    }
   }
 }
 
-// Raíz del quipu: tipografía "comunidad UTEC" centrada, sin svgs, sin
-// imágenes. Es el ancla simbólica del grafo.
+// Raíz del quipu: tipografía "comunidad UTEC" centrada arriba de la
+// cuerda primaria. Sin svgs, sin imágenes, sin línea decorativa — la
+// cuerda primaria abajo ES el subrayado del título.
 function drawRootLabel(
   ctx: CanvasRenderingContext2D,
   n: TNode, alpha: number, zoom: number,
@@ -264,19 +279,56 @@ function drawRootLabel(
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
+  const size = zoom > 0.8 ? 32 : zoom > 0.5 ? 25 : 19
   ctx.font = `italic ${size}px 'Cormorant Garamond', Georgia, serif`
   ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
-  ctx.fillText(n.label, n.x, n.y - size * 0.05)
-  // Línea decorativa debajo
-  const [ar, ag, ab] = rgb(ACC)
-  ctx.beginPath()
-  ctx.moveTo(n.x - size * 1.6, n.y + size * 0.85)
-  ctx.lineTo(n.x + size * 1.6, n.y + size * 0.85)
-  ctx.strokeStyle = `rgba(${ar},${ag},${ab},${alpha * 0.55})`
-  ctx.lineWidth = 0.8
-  ctx.stroke()
+  ctx.fillText(n.label, n.x, n.y)
   ctx.restore()
+}
+
+// Cuerda de quipu (primaria horizontal o pendant vertical). Reusa la
+// lógica multi-strand de drawRope pero parametrizada: la sag se puede
+// reducir para cords más rectos, y el twist se controla independiente
+// del predicado. No depende de TEdge — solo coords.
+export function drawCord(
+  ctx: CanvasRenderingContext2D,
+  x1: number, y1: number, x2: number, y2: number,
+  t: number, alpha: number, zoom: number, waveOff: number,
+  cfg: { strands: number; spread: number; weight: number; twist: number; sagAmount: number },
+) {
+  const [cr, cg, cb] = rgb(FG)
+  const dx = x2 - x1, dy = y2 - y1
+  const len = Math.hypot(dx, dy) || 1
+  const nx = -dy / len, ny = dx / len
+  const sag = len * cfg.sagAmount
+  const wave = Math.sin(t * 0.25 + waveOff) * 0.45
+  const cx0 = (x1 + x2) / 2 + nx * sag * wave
+  const cy0 = (y1 + y2) / 2 + ny * sag * wave
+
+  const steps = zoom > 0.8 ? 36 : zoom > 0.4 ? 22 : 14
+  for (let si = 0; si < cfg.strands; si++) {
+    const off = (si - (cfg.strands - 1) / 2) * cfg.spread
+    const phaseOff = si * (Math.PI * 2 / cfg.strands)
+    ctx.beginPath()
+    ctx.moveTo(x1 + nx * off, y1 + ny * off)
+    for (let i = 1; i <= steps; i++) {
+      const tt = i / steps
+      const bx = (1 - tt) * (1 - tt) * x1 + 2 * (1 - tt) * tt * cx0 + tt * tt * x2
+      const by = (1 - tt) * (1 - tt) * y1 + 2 * (1 - tt) * tt * cy0 + tt * tt * y2
+      const tbx = 2 * (1 - tt) * (cx0 - x1) + 2 * tt * (x2 - cx0)
+      const tby = 2 * (1 - tt) * (cy0 - y1) + 2 * tt * (y2 - cy0)
+      const tlen = Math.hypot(tbx, tby) || 1
+      const tnx = -tby / tlen, tny = tbx / tlen
+      const twist = Math.sin(tt * Math.PI * cfg.twist * 4 + phaseOff + t * 0.35) * off * 0.55
+      ctx.lineTo(bx + tnx * (off + twist), by + tny * (off + twist))
+    }
+    const fade = 1 - Math.abs(si - (cfg.strands - 1) / 2) / Math.max(cfg.strands - 1, 1)
+    const strokeA = alpha * (0.5 + 0.45 * fade)
+    ctx.strokeStyle = `rgba(${cr},${cg},${cb},${strokeA})`
+    ctx.lineWidth = cfg.weight * (si === Math.floor(cfg.strands / 2) ? 1.1 : 0.85)
+    ctx.setLineDash([])
+    ctx.stroke()
+  }
 }
 
 function drawKnotActividad(

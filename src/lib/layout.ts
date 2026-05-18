@@ -1,51 +1,57 @@
 import type { TNode } from '../types/graph'
 import { SYNTHETIC } from '../data/quipus'
 
-// Layout radial-jerárquico para el quipu social: raíz al centro,
-// nudos cabecera por área en un anillo intermedio, y nodos de datos
-// agrupados alrededor de su nudo cabecera. La raíz y las cabeceras
-// quedan pinneadas (fx/fy) — los datos quedan libres para que la
-// simulación los acomode según sus alianzas y vínculos.
+// Layout literal de quipu: cuerda primaria horizontal en la parte superior,
+// y un pendant cord vertical por cada área que cuelga desde la cuerda
+// primaria. Las orgs son knots atadas a lo largo de su pendant.
 //
-// Layout legacy (cuando no hay raíz sintética: cargamos data antigua o
-// dummies sin estructura de quipu) cae al ring-radial original por tipo.
+// Todos los nodos quedan pinneados (fx/fy) — la simulación no los mueve.
+// El cord visual se dibuja en lib/render.ts pasando POR las posiciones
+// de los knots.
+//
+// Layout legacy (sin raíz sintética) cae al ring-radial original para
+// data antigua o dummies sin estructura de quipu.
 export function initLayout(nodes: TNode[], w: number, h: number) {
-  const cx = w / 2
-  const cy = h / 2
-
   const root = nodes.find(n => n.id === SYNTHETIC.ROOT_ID)
   if (root) {
-    initQuipuLayout(nodes, cx, cy)
+    initQuipuLayout(nodes, w, h)
     return
   }
-  initLegacyLayout(nodes, cx, cy)
+  initLegacyLayout(nodes, w / 2, h / 2)
 }
 
-function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
+function initQuipuLayout(nodes: TNode[], w: number, h: number) {
   const root = nodes.find(n => n.id === SYNTHETIC.ROOT_ID)!
-  root.x = cx
-  root.y = cy
-  root.fx = cx
-  root.fy = cy
+  const cordY = Math.max(140, h * 0.16)
+  const labelY = cordY - 64
+  const leftX = Math.max(110, w * 0.10)
+  const rightX = Math.min(w - 110, w * 0.90)
+
+  // Raíz: posicionada arriba de la cuerda primaria, sin halo, solo label.
+  root.x = w / 2
+  root.y = labelY
+  root.fx = w / 2
+  root.fy = labelY
   root.vx = 0
   root.vy = 0
 
   const areaHeaders = nodes.filter(n => n.type === 'AreaHeader')
-  const R_AREA = 280
+  const nAreas = Math.max(areaHeaders.length, 1)
   for (let i = 0; i < areaHeaders.length; i++) {
-    const ang = (i / areaHeaders.length) * Math.PI * 2 - Math.PI / 2
-    const x = cx + Math.cos(ang) * R_AREA
-    const y = cy + Math.sin(ang) * R_AREA
+    const x = leftX + (i + 0.5) * (rightX - leftX) / nAreas
     areaHeaders[i].x = x
-    areaHeaders[i].y = y
+    areaHeaders[i].y = cordY
     areaHeaders[i].fx = x
-    areaHeaders[i].fy = y
+    areaHeaders[i].fy = cordY
     areaHeaders[i].vx = 0
     areaHeaders[i].vy = 0
   }
 
-  // Posicionar nodos de datos como un arco alrededor de su nudo cabecera,
-  // empujados hacia afuera de la raíz. Conserva forma de cuerda colgante.
+  // Agrupar orgs por área y atarlas como knots verticalmente debajo del
+  // header. Espaciado adaptativo: pendants con muchas orgs se aprietan
+  // (mín 28px), pendants cortos se relajan (máx 56px). Las longitudes
+  // dispares son auténticas — los quipus reales tienen cords de longitudes
+  // diferentes según los datos que codifican.
   const byArea: Record<string, TNode[]> = {}
   for (const n of nodes) {
     if (n.synthetic) continue
@@ -53,32 +59,39 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
     byArea[n.groupKey] ??= []
     byArea[n.groupKey].push(n)
   }
+
+  const FIRST_OFFSET = 80
+  const targetLen = Math.max(360, h * 0.72)
   const headerByArea = new Map(areaHeaders.map(h => [h.groupKey!, h]))
-  for (const [area, members] of Object.entries(byArea)) {
+
+  for (const [area, orgs] of Object.entries(byArea)) {
     const header = headerByArea.get(area)
     if (!header) continue
-    const baseAng = Math.atan2(header.y - cy, header.x - cx)
-    const fanWidth = Math.min(Math.PI * 0.55, 0.18 + members.length * 0.04)
-    const ring = 180 + Math.min(120, members.length * 4)
-    for (let j = 0; j < members.length; j++) {
-      const t = members.length === 1 ? 0 : (j / (members.length - 1)) - 0.5
-      const ang = baseAng + t * fanWidth
-      const r = ring + ((j % 3) - 1) * 22
-      members[j].x = cx + Math.cos(ang) * (R_AREA + r)
-      members[j].y = cy + Math.sin(ang) * (R_AREA + r)
-      members[j].vx = (Math.random() - 0.5) * 0.2
-      members[j].vy = (Math.random() - 0.5) * 0.2
+    const spacing = orgs.length <= 1
+      ? 0
+      : Math.max(28, Math.min(56, (targetLen - FIRST_OFFSET) / (orgs.length - 1)))
+    for (let j = 0; j < orgs.length; j++) {
+      const ox = header.x
+      const oy = header.y + FIRST_OFFSET + j * spacing
+      orgs[j].x = ox
+      orgs[j].y = oy
+      orgs[j].fx = ox
+      orgs[j].fy = oy
+      orgs[j].vx = 0
+      orgs[j].vy = 0
     }
   }
 
-  // Nodos sin grupo (no debería pasar para Quipu Social, pero por si acaso).
+  // Orfans: no debería pasar para Quipu Social (todos los nodos de datos
+  // tienen `area`). Por seguridad, los apilamos al lado derecho.
   const orphans = nodes.filter(n => !n.synthetic && !n.groupKey)
-  const step = (Math.PI * 2) / Math.max(orphans.length, 1)
   for (let j = 0; j < orphans.length; j++) {
-    orphans[j].x = cx + Math.cos(step * j) * 600
-    orphans[j].y = cy + Math.sin(step * j) * 600
-    orphans[j].vx = (Math.random() - 0.5) * 0.2
-    orphans[j].vy = (Math.random() - 0.5) * 0.2
+    orphans[j].x = w - 60
+    orphans[j].y = cordY + FIRST_OFFSET + j * 40
+    orphans[j].fx = orphans[j].x
+    orphans[j].fy = orphans[j].y
+    orphans[j].vx = 0
+    orphans[j].vy = 0
   }
 }
 
