@@ -161,7 +161,9 @@ export function drawKnot(
     : n.type === 'Equipo' ? 7
     : 10
 
-  const pulse = 1 + ((hov || sel) ? Math.sin(t * 3) * 0.04 : 0)
+  const idlePhase = n.id.length * 1.37 + n.id.charCodeAt(0) * 0.41
+  const idleBreath = 1 + Math.sin(t * 1.2 + idlePhase) * 0.018
+  const pulse = idleBreath + ((hov || sel) ? Math.sin(t * 3) * 0.06 : 0)
   const R = baseR * pulse
 
   // LOD: at very low zoom, just draw a dot

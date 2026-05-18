@@ -82,7 +82,10 @@ export function useGraphSimulation(
           .force("link", d3.forceLink(links).distance(linkDist).strength(linkStr))
           .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(600))
           .force("collide", d3.forceCollide(14))
-          .alphaDecay(0.025);
+          .alphaDecay(0.018)
+          .alphaMin(0)
+          .alphaTarget(0.008)
+          .velocityDecay(0.42);
         // In quipu mode the pinned root + area headers anchor the layout;
         // adding a centering force would tug everything inward and erase
         // the radial structure.
