@@ -3,17 +3,26 @@ import type { TNode } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
   alianzaCon: 'alianza con',
-  cubreTema: 'cubre tema',
-  asesora: 'asesora',
-  cita: 'cita',
+  usaContenidoDe: 'usa contenido de',
+  dictadoPor: 'dictado por',
+  perteneceA: 'pertenece a',
+  prerequisitoDe: 'prerequisito de',
+  miembroDe: 'miembro de',
+  investigaEn: 'investiga en',
+  participaEn: 'participa en',
+  ubicadoEn: 'ubicado en',
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  'trama:Club': 'Club',
-  'trama:Curso': 'Curso',
-  'trama:Docente': 'Docente',
-  'trama:Tesis': 'Tesis',
-  'trama:Proyecto': 'Proyecto',
+  'Club': 'Club',
+  'Curso': 'Curso',
+  'Docente': 'Docente',
+  'Proyecto': 'Proyecto',
+  'Laboratorio': 'Laboratorio',
+  'Equipo': 'Equipo',
+  'Carrera': 'Carrera',
+  'Departamento': 'Departamento',
+  'GrupoInvestigacion': 'Grupo de Investigación',
 }
 
 interface InfoPanelProps {

@@ -15,6 +15,7 @@ export interface EdgeVisual {
 export interface TNode {
   id: string; type: string; label: string; description: string
   tags: string[]; founded?: string; area?: string; ciclo?: string
+  crisUrl?: string; uri?: string
   x: number; y: number; vx: number; vy: number
 }
 
