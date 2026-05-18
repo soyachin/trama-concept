@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
-import type { TNode } from '../../types/graph'
+import type { TNode, NodeMetaValue, RelatedRef } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
   alianzaCon: 'alianza con',
+  organizadoPor: 'organizado por',
+  coorganizadoPor: 'coorganizado por',
+  asesoradoPor: 'asesorado por',
   usaContenidoDe: 'usa contenido de',
   dictadoPor: 'dictado por',
   perteneceA: 'pertenece a',
@@ -11,10 +14,15 @@ const PRED_LABELS: Record<string, string> = {
   investigaEn: 'investiga en',
   participaEn: 'participa en',
   ubicadoEn: 'ubicado en',
+  quipu: 'quipu',
+  perteneceArea: 'pertenece a área',
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  'Club': 'Club',
+  'OrganizacionEstudiantil': 'Organización estudiantil',
+  'Club': 'Club (informal)',
+  'Actividad': 'Actividad',
+  'AreaHeader': 'Área',
   'Curso': 'Curso',
   'Docente': 'Docente',
   'Proyecto': 'Proyecto',
@@ -23,6 +31,24 @@ const TYPE_LABELS: Record<string, string> = {
   'Carrera': 'Carrera',
   'Departamento': 'Departamento',
   'GrupoInvestigacion': 'Grupo de Investigación',
+}
+
+// Predicados cuyo objeto vive en hidden_types del quipu (carrera, docente,
+// curso). Se renderizan en el panel como chips o lista enlazada.
+const META_RELATION_LABELS: Record<string, string> = {
+  perteneceA: 'carreras afines',
+  asesoradoPor: 'asesores docentes',
+  usaContenidoDe: 'cursos relacionados',
+}
+
+const META_LITERAL_LABELS: Record<string, string> = {
+  area: 'área',
+  contacto: 'contacto',
+  instagram: 'instagram',
+}
+
+function isRelatedList(v: NodeMetaValue): v is RelatedRef[] {
+  return Array.isArray(v) && v.length > 0 && typeof v[0] === 'object' && 'slug' in (v[0] as object)
 }
 
 interface InfoPanelProps {
@@ -109,7 +135,7 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
           </div>
         )}
 
-        {(node.founded || node.area || node.ciclo) && (
+        {hasLiteralMeta(node) && (
           <div style={{
             borderTop: '1px solid var(--color-border-subtle)',
             paddingTop: 10,
@@ -117,9 +143,54 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
             flexDirection: 'column',
             gap: 5,
           }}>
+            {Object.entries(META_LITERAL_LABELS).map(([k, label]) => {
+              const v = node.metadata?.[k]
+              if (typeof v !== 'string' || !v) return null
+              return <Row key={k} k={label} v={v} />
+            })}
             {node.founded && <Row k="fundado" v={node.founded} />}
-            {node.area && <Row k="área" v={node.area} />}
             {node.ciclo && <Row k="ciclo" v={node.ciclo} />}
+          </div>
+        )}
+
+        {hasRelationMeta(node) && (
+          <div style={{
+            borderTop: '1px solid var(--color-border-subtle)',
+            paddingTop: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}>
+            {Object.entries(META_RELATION_LABELS).map(([pred, label]) => {
+              const refs = node.metadata?.[pred]
+              if (!refs || !isRelatedList(refs)) return null
+              return (
+                <div key={pred} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 8.5,
+                    color: 'color-mix(in srgb, var(--color-fg) 32%, transparent)',
+                    letterSpacing: '0.08em',
+                  }}>
+                    {label}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {refs.map(r => (
+                      <span key={r.slug} style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 9,
+                        padding: '3px 8px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 999,
+                        color: 'color-mix(in srgb, var(--color-fg) 70%, transparent)',
+                      }}>
+                        {r.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
@@ -196,6 +267,20 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
       </>)}
     </div>
   )
+}
+
+function hasLiteralMeta(node: TNode): boolean {
+  if (node.founded || node.ciclo) return true
+  if (!node.metadata) return false
+  return Object.keys(META_LITERAL_LABELS).some(k => typeof node.metadata?.[k] === 'string' && node.metadata[k])
+}
+
+function hasRelationMeta(node: TNode): boolean {
+  if (!node.metadata) return false
+  return Object.keys(META_RELATION_LABELS).some(k => {
+    const v = node.metadata?.[k]
+    return v && isRelatedList(v)
+  })
 }
 
 function Row({ k, v }: { k: string; v: string }) {

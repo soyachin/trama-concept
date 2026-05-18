@@ -25,6 +25,9 @@ function hitTest(
 ): TNode | null {
   const [gx, gy] = toGraph(mx, my, s, canvasW, canvasH);
   for (const n of nodes) {
+    // La raíz "comunidad UTEC" es solo tipografía decorativa, no un nodo
+    // interactivo. Saltarla evita capturar clicks cerca del centro.
+    if (n.type === 'Root') continue;
     const dx = gx - n.x,
       dy = gy - n.y;
     if (dx * dx + dy * dy < 16 * 16) return n;
@@ -78,7 +81,9 @@ export function useGraphInteraction(
       const cv = getCanvas();
       if (!cv) return;
       const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
-      if (n) {
+      // Los nudos cabecera de área están pinneados al layout y no
+      // deben arrastrarse — la raíz ya quedó filtrada por hitTest.
+      if (n && !n.synthetic) {
         s.dragNode = n;
         s.dragging = false;
       } else {
