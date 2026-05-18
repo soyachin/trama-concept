@@ -14,8 +14,12 @@
   --color-node-club: #6366f1;
   --color-node-curso: #22c55e;
   --color-node-docente: #f59e0b;
-  --color-node-tesis: #a855f7;
   --color-node-proyecto: #ef4444;
+  --color-node-laboratorio: #06b6d4;
+  --color-node-equipo: #8b5cf6;
+  --color-node-carrera: #ec4899;
+  --color-node-departamento: #14b8a6;
+  --color-node-grupo: #f97316;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'Space Mono', 'Courier New', monospace;
   --panel-width: 292px;

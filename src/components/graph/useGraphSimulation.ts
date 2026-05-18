@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import p5 from "p5";
 import * as d3 from "d3-force";
 import type { TNode, TEdge } from "../../types/graph";
-import { BG, NODE_VISUALS, DEFAULT_VISUAL, BAYER } from "../../config/visuals";
+import { BG, BAYER } from "../../config/visuals";
 import { initLayout } from "../../lib/layout";
-import { drawNode, drawEdge } from "../../lib/render";
+import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
 
 export interface SimulationState {
   time: number;
@@ -30,10 +30,22 @@ export function useGraphSimulation(
   searchRef: React.RefObject<string>,
   stateRef: React.MutableRefObject<SimulationState>,
 ) {
-
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || nodes.length === 0) return;
     const s = stateRef.current;
+
+    // Build lookup map for O(1) access
+    const nodeMap = new Map<string, TNode>();
+    for (const n of nodes) nodeMap.set(n.id, n);
+
+    // Pre-build adjacency for fast connected-check
+    const adj = new Map<string, Set<string>>();
+    for (const e of edges) {
+      if (!adj.has(e.source)) adj.set(e.source, new Set());
+      if (!adj.has(e.target)) adj.set(e.target, new Set());
+      adj.get(e.source)!.add(e.target);
+      adj.get(e.target)!.add(e.source);
+    }
 
     const instance = new p5((p: p5) => {
       p.setup = () => {
@@ -43,17 +55,40 @@ export function useGraphSimulation(
         cnv.parent(containerRef.current!);
         p.randomSeed(42);
         initLayout(nodes, p.width, p.height);
-        const links = edges.map((e) => ({
-          source: nodes.find((n) => n.id === e.source)!,
-          target: nodes.find((n) => n.id === e.target)!,
-        }));
+        const links = edges
+          .map((e) => {
+            const src = nodeMap.get(e.source);
+            const tgt = nodeMap.get(e.target);
+            if (!src || !tgt) return null;
+            return { source: src, target: tgt };
+          })
+          .filter(Boolean) as { source: TNode; target: TNode }[];
+
+        // Detect quipu mode by presence of synthetic structural nodes.
+        const hasSynthetic = nodes.some(n => n.synthetic);
+
+        // Tuned force params: quipu mode has a pinned scaffold so we can
+        // afford stronger repulsion on free nodes for breathing room.
+        const chargeStr = hasSynthetic
+          ? -180
+          : nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
+        const linkDist = hasSynthetic
+          ? 70
+          : nodes.length > 500 ? 80 : 120;
+        const linkStr = hasSynthetic ? 0.04 : 0.008;
+
         s.simulation = d3
           .forceSimulation(nodes)
-          .force("link", d3.forceLink(links).distance(120).strength(0.012))
-          .force("charge", d3.forceManyBody().strength(-400))
-          .force("center", d3.forceCenter(p.width / 2, p.height / 2))
-          .force("collide", d3.forceCollide(20))
-          .alphaDecay(0.02);
+          .force("link", d3.forceLink(links).distance(linkDist).strength(linkStr))
+          .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(600))
+          .force("collide", d3.forceCollide(14))
+          .alphaDecay(0.025);
+        // In quipu mode the pinned root + area headers anchor the layout;
+        // adding a centering force would tug everything inward and erase
+        // the radial structure.
+        if (!hasSynthetic) {
+          s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
+        }
         s.simulation.on("tick", () => {});
       };
 
@@ -67,21 +102,39 @@ export function useGraphSimulation(
         s.introSec += dt ? dt / 1000 : 0.016;
 
         const ctx = p.drawingContext as CanvasRenderingContext2D;
+        const w = p.width, h = p.height;
 
         ctx.fillStyle = BG;
-        ctx.fillRect(0, 0, p.width, p.height);
+        ctx.fillRect(0, 0, w, h);
+
+        // Woven texture background (pre-rendered, cheap blit)
+        const wovenTex = getWovenTexture(w, h);
+        ctx.drawImage(wovenTex, 0, 0);
 
         ctx.save();
-        ctx.translate(s.panX + p.width / 2, s.panY + p.height / 2);
+        ctx.translate(s.panX + w / 2, s.panY + h / 2);
         ctx.scale(s.zoom, s.zoom);
-        ctx.translate(-p.width / 2, -p.height / 2);
+        ctx.translate(-w / 2, -h / 2);
+
+        // Compute viewport bounds in graph space for culling
+        const invZoom = 1 / s.zoom;
+        const vx1 = (0 - s.panX - w / 2) * invZoom + w / 2;
+        const vy1 = (0 - s.panY - h / 2) * invZoom + h / 2;
+        const vx2 = (w - s.panX - w / 2) * invZoom + w / 2;
+        const vy2 = (h - s.panY - h / 2) * invZoom + h / 2;
+        const margin = 60; // extra margin for labels/halos
 
         const q = searchRef.current.toLowerCase().trim();
 
+        // Draw edges (with viewport culling)
         for (const e of edges) {
-          const src = nodes.find((n) => n.id === e.source);
-          const tgt = nodes.find((n) => n.id === e.target);
+          const src = nodeMap.get(e.source);
+          const tgt = nodeMap.get(e.target);
           if (!src || !tgt) continue;
+
+          // Viewport culling for edges
+          if (!edgeInViewport(src, tgt, margin, vx1, vy1, vx2, vy2)) continue;
+
           const active =
             s.hovId === e.source ||
             s.hovId === e.target ||
@@ -99,11 +152,14 @@ export function useGraphSimulation(
           if (active) a = 0.82;
           else if (s.hovId || s.selId) a = 0.04;
           if (q && !mSrc && !mTgt) a = 0.025;
-          drawEdge(ctx, e, src, tgt, s.time, a, active);
+          drawRope(ctx, e, src, tgt, s.time, a, active, s.zoom);
         }
 
+        // Draw nodes (with viewport culling)
         for (const n of nodes) {
-          const vis = NODE_VISUALS[n.type] ?? DEFAULT_VISUAL;
+          // Viewport culling
+          if (!isInViewport(n.x, n.y, margin, vx1, vy1, vx2, vy2)) continue;
+
           const hov = n.id === s.hovId;
           const sel = n.id === s.selId;
           const match =
@@ -112,16 +168,19 @@ export function useGraphSimulation(
             n.tags.some((t) => t.toLowerCase().includes(q)) ||
             n.description.toLowerCase().includes(q);
           let a = 0.92;
-          if ((s.hovId || s.selId) && !hov && !sel) a = 0.22;
+          if ((s.hovId || s.selId) && !hov && !sel) {
+            const connected = adj.get(s.selId ?? s.hovId ?? '')?.has(n.id) ?? false;
+            a = connected ? 0.75 : 0.2;
+          }
           if (q && !match) a = 0.07;
-          drawNode(p, ctx, n, vis, s.time, hov, sel, a);
+          drawKnot(ctx, n, s.time, hov, sel, a, s.zoom);
         }
 
         ctx.restore();
 
         if (s.intro !== "done") {
           if (s.intro === "showing" && s.introSec > 4) s.intro = "dissolving";
-          renderIntro(ctx, p.width, p.height);
+          renderIntro(ctx, w, h);
         }
       };
 

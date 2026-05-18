@@ -1,12 +1,15 @@
-import { useRef, useState, useCallback, useMemo, useEffect } from "react";
-import type { TNode } from "../../types/graph";
-import { processJSONLD, TRAMA_GRAPH } from "../../data/graph";
+import { useRef, useState, useCallback, useEffect } from "react";
+import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
+import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
 import { OverlayLayer } from "../overlay/OverlayLayer";
 import { InfoPanel } from "../ui/InfoPanel";
 import { SearchBar } from "../ui/SearchBar";
-import { EdgeLegend } from "../ui/EdgeLegend";
+import { RopeLegend } from "../ui/EdgeLegend";
+import { QuipuSelector } from "../ui/QuipuSelector";
+
+const DEFAULT_QUIPU_ID = "social";
 
 export function TramaGraph() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -17,7 +20,57 @@ export function TramaGraph() {
     searchRef.current = searchVal;
   }, [searchVal]);
 
-  const graphData = useMemo(() => processJSONLD(TRAMA_GRAPH), []);
+  const [quipus, setQuipus] = useState<QuipuSummary[]>([]);
+  const [activeQuipuId, setActiveQuipuId] = useState<string>(DEFAULT_QUIPU_ID);
+  const [nodes, setNodes] = useState<TNode[]>([]);
+  const [edges, setEdges] = useState<TEdge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ nodes: 0, edges: 0 });
+
+  // Lista de quipus disponibles (top-bar). Si falla, deja la lista vacía
+  // y el QuipuSelector solo muestra los ghosts de "próximamente".
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchQuipus();
+        if (!cancelled) setQuipus(data);
+      } catch {
+        // backend offline -> ghosts only
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await fetchQuipuGraph(activeQuipuId);
+        if (cancelled) return;
+        setNodes(data.nodes);
+        setEdges(data.edges);
+        setStats({
+          nodes: data.nodes.filter(n => !n.synthetic).length,
+          edges: data.edges.filter(e => !e.synthetic).length,
+        });
+      } catch {
+        console.warn("API unavailable, using fallback quipu data");
+        const data = getDummyQuipuGraph();
+        if (cancelled) return;
+        setNodes(data.nodes);
+        setEdges(data.edges);
+        setStats({
+          nodes: data.nodes.filter(n => !n.synthetic).length,
+          edges: data.edges.filter(e => !e.synthetic).length,
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeQuipuId]);
 
   const stateRef = useRef<SimulationState>({
     time: 0,
@@ -36,37 +89,52 @@ export function TramaGraph() {
     simulation: null,
   });
 
-  const { nodes, edges } = graphData;
+  // Build adjacency + edge lookup once. Excluye edges sintéticas (raíz →
+  // área → nodo) del panel de conexiones — son estructurales del quipu,
+  // no relaciones semánticas del individuo.
+  const edgeIndex = useRef(new Map<string, { predicate: string; id: string; label: string }[]>());
+  useEffect(() => {
+    const idx = new Map<string, { predicate: string; id: string; label: string }[]>();
+    const nodeMap = new Map<string, TNode>();
+    for (const n of nodes) nodeMap.set(n.id, n);
+    for (const e of edges) {
+      if (e.synthetic) continue;
+      const srcLabel = nodeMap.get(e.source)?.label ?? '';
+      const tgtLabel = nodeMap.get(e.target)?.label ?? '';
+      if (!idx.has(e.source)) idx.set(e.source, []);
+      if (!idx.has(e.target)) idx.set(e.target, []);
+      idx.get(e.source)!.push({ predicate: e.predicate, id: e.target, label: tgtLabel });
+      idx.get(e.target)!.push({ predicate: e.predicate, id: e.source, label: srcLabel });
+    }
+    edgeIndex.current = idx;
+  }, [nodes, edges]);
 
   const getConns = useCallback(
-    (id: string) =>
-      edges
-        .filter((e) => e.source === id || e.target === id)
-        .map((e) => ({
-          predicate: e.predicate,
-          id: e.source === id ? e.target : e.source,
-          label:
-            nodes.find(
-              (n) => n.id === (e.source === id ? e.target : e.source),
-            )?.label ?? "",
-        })),
-    [nodes, edges],
+    (id: string) => edgeIndex.current.get(id) ?? [],
+    [],
   );
 
-  useGraphSimulation(
-    containerRef,
-    nodes,
-    edges,
-    searchRef,
-    stateRef,
-  );
+  useGraphSimulation(containerRef, nodes, edges, searchRef, stateRef);
+  useGraphInteraction(containerRef, nodes, stateRef, setPanelNode);
 
-  useGraphInteraction(
-    containerRef,
-    nodes,
-    stateRef,
-    setPanelNode,
-  );
+  if (loading) {
+    return (
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        background: "#0f0e0b",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontStyle: "italic",
+        fontSize: 21,
+        color: "#f0ede4",
+      }}>
+        cargando trama…
+      </div>
+    );
+  }
 
   return (
     <div
@@ -104,23 +172,50 @@ export function TramaGraph() {
           />
         </div>
         <div style={{ pointerEvents: "auto" }}>
-          <EdgeLegend />
+          <RopeLegend />
         </div>
+        <QuipuSelector
+          quipus={quipus}
+          activeId={activeQuipuId}
+          onSelect={setActiveQuipuId}
+        />
       </OverlayLayer>
 
+      {/* Wordmark */}
       <div
         style={{
           position: "absolute",
-          top: 14,
-          right: 14,
+          top: 18,
+          left: 22,
           zIndex: 20,
-          fontFamily: "var(--font-mono)",
-          fontSize: 8.5,
-          color: "color-mix(in srgb, var(--color-fg) 20%, transparent)",
-          letterSpacing: "0.1em",
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontStyle: "italic",
+          fontSize: 22,
+          color: "#f0ede4",
+          letterSpacing: "0.04em",
+          opacity: 0.9,
+          pointerEvents: "none",
         }}
       >
-        trama &middot; seed:42
+        trama
+      </div>
+
+      {/* Stats */}
+      <div
+        style={{
+          position: "absolute",
+          top: 18,
+          right: 18,
+          zIndex: 20,
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 10,
+          color: "rgba(240,237,228,0.38)",
+          letterSpacing: "0.08em",
+          textAlign: "right",
+          pointerEvents: "none",
+        }}
+      >
+        {stats.nodes} nudos · {stats.edges} cuerdas
       </div>
     </div>
   );
