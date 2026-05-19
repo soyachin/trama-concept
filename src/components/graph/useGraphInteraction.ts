@@ -33,7 +33,6 @@ function hitTest(
 ): TNode | null {
   const [gx, gy] = toGraph(mx, my, s, canvasW, canvasH);
   for (const n of nodes) {
-    if (n.type === 'Root') continue;
     const dx = gx - n.x,
       dy = gy - n.y;
     if (dx * dx + dy * dy < 18 * 18) return n;

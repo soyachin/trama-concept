@@ -86,12 +86,7 @@ export function useGraphSimulation(
           .alphaMin(0)
           .alphaTarget(0.008)
           .velocityDecay(0.42);
-        // In quipu mode the pinned root + area headers anchor the layout;
-        // adding a centering force would tug everything inward and erase
-        // the radial structure.
-        if (!hasSynthetic) {
-          s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
-        }
+        s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
         s.simulation.on("tick", () => {});
       };
 
