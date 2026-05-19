@@ -155,10 +155,8 @@ export function useGraphInteraction(
       const [mx, my] = canvasCoords(e);
 
       if (s.dragNode) {
-        if (!s.dragNode.synthetic) {
-          s.dragNode.fx = null;
-          s.dragNode.fy = null;
-        }
+        s.dragNode.fx = null;
+        s.dragNode.fy = null;
         s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
         const wasDragged = nodeDragActiveRef.current;
         const releasedNode = s.dragNode;
@@ -379,10 +377,8 @@ export function useGraphInteraction(
       if (s.intro !== "done") return;
 
       if (touchDragNode) {
-        if (!touchDragNode.synthetic) {
-          touchDragNode.fx = null;
-          touchDragNode.fy = null;
-        }
+        touchDragNode.fx = null;
+        touchDragNode.fy = null;
         s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
       }
 

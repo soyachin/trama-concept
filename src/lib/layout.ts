@@ -3,8 +3,8 @@ import { SYNTHETIC } from '../data/quipus'
 
 // Layout radial-jerárquico para el quipu social: raíz al centro,
 // nudos cabecera por área en un anillo intermedio, y nodos de datos
-// agrupados alrededor de su nudo cabecera. La raíz y las cabeceras
-// quedan pinneadas (fx/fy) — los datos quedan libres para que la
+// agrupados alrededor de su nudo cabecera. Solo la raíz queda
+// pinneada (fx/fy) — cabeceras y datos quedan libres para que la
 // simulación los acomode según sus alianzas y vínculos.
 //
 // Layout legacy (cuando no hay raíz sintética: cargamos data antigua o
@@ -38,8 +38,6 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
     const y = cy + Math.sin(ang) * R_AREA
     areaHeaders[i].x = x
     areaHeaders[i].y = y
-    areaHeaders[i].fx = x
-    areaHeaders[i].fy = y
     areaHeaders[i].vx = 0
     areaHeaders[i].vy = 0
   }
