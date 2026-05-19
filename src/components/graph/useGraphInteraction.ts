@@ -115,7 +115,6 @@ export function useGraphInteraction(
     const onMouseMove = (e: MouseEvent) => {
       if (s.intro !== "done") return;
       const [mx, my] = canvasCoords(e);
-      prevMouseRef.current = { x: mx, y: my };
       const cv = getCanvas();
       if (!cv) return;
       const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
@@ -138,6 +137,8 @@ export function useGraphInteraction(
         s.dragNode = n;
         n.fx = n.x;
         n.fy = n.y;
+        s.dStartX = mx;
+        s.dStartY = my;
         nodeDragActiveRef.current = false;
         s.simulation?.alphaTarget(DRAG_ALPHA).restart();
       } else {
@@ -156,7 +157,7 @@ export function useGraphInteraction(
       if (s.dragNode) {
         s.dragNode.fx = null;
         s.dragNode.fy = null;
-        s.simulation?.alphaTarget(IDLE_ALPHA);
+        s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
         const wasDragged = nodeDragActiveRef.current;
         const releasedNode = s.dragNode;
         s.dragNode = null;
@@ -378,7 +379,7 @@ export function useGraphInteraction(
       if (touchDragNode) {
         touchDragNode.fx = null;
         touchDragNode.fy = null;
-        s.simulation?.alphaTarget(IDLE_ALPHA);
+        s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
       }
 
       if (e.changedTouches.length === 1 && e.touches.length === 0 && !touchMoved) {
