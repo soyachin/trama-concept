@@ -29,15 +29,21 @@ export function edgeInViewport(
   return maxX >= vx1 && minX <= vx2 && maxY >= vy1 && minY <= vy2
 }
 
-// ─── Woven texture background (pre-rendered) ────────────────────
+// ─── Woven texture background (pre-rendered at buffer resolution) ─
 let wovenCanvas: HTMLCanvasElement | null = null
+let wovenDpr = 0
 
-export function getWovenTexture(w: number, h: number): HTMLCanvasElement {
-  if (wovenCanvas && wovenCanvas.width === w && wovenCanvas.height === h) return wovenCanvas
+export function getWovenTexture(w: number, h: number, dpr = 1): HTMLCanvasElement {
+  const bw = Math.round(w * dpr)
+  const bh = Math.round(h * dpr)
+  if (wovenCanvas && wovenCanvas.width === bw && wovenCanvas.height === bh && wovenDpr === dpr)
+    return wovenCanvas
   wovenCanvas = document.createElement('canvas')
-  wovenCanvas.width = w
-  wovenCanvas.height = h
+  wovenCanvas.width = bw
+  wovenCanvas.height = bh
+  wovenDpr = dpr
   const ctx = wovenCanvas.getContext('2d')!
+  ctx.scale(dpr, dpr)
   const spacing = 22
   for (let y = 0; y < h; y += spacing) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y)

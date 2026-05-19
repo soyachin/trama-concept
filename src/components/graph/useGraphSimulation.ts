@@ -95,6 +95,20 @@ export function useGraphSimulation(
         s.simulation.on("tick", () => {});
       };
 
+      // ── DPR change listener (MDN pattern) ─────────────────────
+      // Fires when the window moves between monitors with different
+      // devicePixelRatio (e.g. Retina ↔ external display).  Each
+      // listener is registered with { once: true } and re-registered
+      // on every change so the media query stays current.
+      function onDprChange() {
+        const dpr = Math.ceil(window.devicePixelRatio) || 1;
+        p.pixelDensity(dpr);
+        matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+          .addEventListener('change', onDprChange, { once: true });
+      }
+      matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+        .addEventListener('change', onDprChange, { once: true });
+
       p.windowResized = () => {
         p.resizeCanvas(window.innerWidth, window.innerHeight);
       };
@@ -110,9 +124,10 @@ export function useGraphSimulation(
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, w, h);
 
-        // Woven texture background (pre-rendered, cheap blit)
-        const wovenTex = getWovenTexture(w, h);
-        ctx.drawImage(wovenTex, 0, 0);
+        // Woven texture background (pre-rendered at buffer resolution)
+        const dpr = Math.ceil(window.devicePixelRatio) || 1;
+        const wovenTex = getWovenTexture(w, h, dpr);
+        ctx.drawImage(wovenTex, 0, 0, w, h);
 
         ctx.save();
         ctx.translate(s.panX + w / 2, s.panY + h / 2);
