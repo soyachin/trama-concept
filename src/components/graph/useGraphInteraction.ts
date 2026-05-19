@@ -81,9 +81,7 @@ export function useGraphInteraction(
       const cv = getCanvas();
       if (!cv) return;
       const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
-      // Los nudos cabecera de área están pinneados al layout y no
-      // deben arrastrarse — la raíz ya quedó filtrada por hitTest.
-      if (n && !n.synthetic) {
+      if (n) {
         s.dragNode = n;
         s.dragging = false;
       } else {
@@ -131,6 +129,8 @@ export function useGraphInteraction(
       if (s.dragNode) {
         s.dragNode.x += movedX / s.zoom;
         s.dragNode.y += movedY / s.zoom;
+        if (s.dragNode.fx != null) s.dragNode.fx = s.dragNode.x;
+        if (s.dragNode.fy != null) s.dragNode.fy = s.dragNode.y;
         s.dragNode.vx = 0;
         s.dragNode.vy = 0;
         s.simulation?.alphaTarget(0.3).restart();
