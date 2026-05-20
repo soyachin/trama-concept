@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { ROPE_CONFIGS } from '../../config/visuals'
+import { ROPE_CONFIGS, FONT_MONO } from '../../config/visuals'
 
 const LEGEND_ITEMS = [
   { pred: 'quipu',           label: 'quipu' },
@@ -27,7 +27,7 @@ export function RopeLegend() {
 
     ctx.clearRect(0, 0, 160, LEGEND_ITEMS.length * 18 + 8)
 
-    ctx.font = "8px 'Space Mono', monospace"
+    ctx.font = `8px ${FONT_MONO}`
 
     LEGEND_ITEMS.forEach((item, i) => {
       const y = 12 + i * 18

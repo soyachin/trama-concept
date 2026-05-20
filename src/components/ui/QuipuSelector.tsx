@@ -17,9 +17,9 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
       zIndex: 25,
       display: 'flex',
       gap: 4,
-      background: 'rgba(15,14,11,0.62)',
+      background: 'color-mix(in srgb, var(--color-bg) 62%, transparent)',
       backdropFilter: 'blur(6px)',
-      border: '1px solid rgba(240,237,228,0.08)',
+      border: '1px solid var(--color-border-subtle)',
       borderRadius: 999,
       padding: '4px 6px',
       pointerEvents: 'auto',
@@ -34,19 +34,19 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
             onClick={() => isAvailable && onSelect(q.id)}
             title={q.description + (isAvailable ? '' : ' · próximamente')}
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: 'var(--font-mono)',
               fontSize: 10,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               padding: '6px 14px',
               borderRadius: 999,
               border: '1px solid transparent',
-              background: isActive ? 'rgba(200,117,58,0.18)' : 'transparent',
+              background: isActive ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent',
               color: isActive
-                ? '#c8753a'
+                ? 'var(--color-accent)'
                 : isAvailable
-                  ? 'rgba(240,237,228,0.78)'
-                  : 'rgba(240,237,228,0.22)',
+                  ? 'color-mix(in srgb, var(--color-fg) 78%, transparent)'
+                  : 'color-mix(in srgb, var(--color-fg) 22%, transparent)',
               cursor: isAvailable ? 'pointer' : 'default',
               transition: 'all 160ms ease',
             }}

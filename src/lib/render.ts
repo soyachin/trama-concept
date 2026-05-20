@@ -1,5 +1,5 @@
 import type { TNode, TEdge } from '../types/graph'
-import { TYPE_COLORS, ROPE_CONFIGS, BAYER, ACC, FG } from '../config/visuals'
+import { TYPE_COLORS, ROPE_CONFIGS, BAYER, ACC, FG, FONT_SERIF } from '../config/visuals'
 
 export function rgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
@@ -80,7 +80,7 @@ export function drawRope(
   const nx = -dy / len, ny = dx / len
 
   const sag = len * 0.12
-  const wave = Math.sin(t * 0.6 + e.waveOff) * 0.3
+  const wave = Math.sin(t * cfg.waveSpeed + e.waveOff) * 0.3
   const cx0 = (src.x + tgt.x) / 2 + nx * sag * wave
   const cy0 = (src.y + tgt.y) / 2 + ny * sag * wave
 
@@ -134,6 +134,27 @@ export function drawRope(
     ctx.beginPath()
     ctx.arc(bx2, by2, 3.2, 0, Math.PI * 2)
     ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
+    ctx.fill()
+  }
+
+  // Arrowhead for directed predicates (skip at very low zoom)
+  if (cfg.directed && zoom > 0.35) {
+    const at = 0.78
+    const ax = qbez(src.x, cx0, tgt.x, at)
+    const ay = qbez(src.y, cy0, tgt.y, at)
+    const tanX = 2 * (1 - at) * (cx0 - src.x) + 2 * at * (tgt.x - cx0)
+    const tanY = 2 * (1 - at) * (cy0 - src.y) + 2 * at * (tgt.y - cy0)
+    const tl = Math.hypot(tanX, tanY) || 1
+    const udx = tanX / tl, udy = tanY / tl
+    const arrLen = 7 * (active ? 1.4 : 1)
+    const arrW = 3.5 * (active ? 1.3 : 1)
+    const pnx = -udy, pny = udx
+    ctx.beginPath()
+    ctx.moveTo(ax + udx * arrLen, ay + udy * arrLen)
+    ctx.lineTo(ax - pnx * arrW, ay - pny * arrW)
+    ctx.lineTo(ax + pnx * arrW, ay + pny * arrW)
+    ctx.closePath()
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},${active ? alpha : alpha * 0.7})`
     ctx.fill()
   }
 }
@@ -253,7 +274,7 @@ export function drawKnot(
     const sz = isHeader
       ? (zoom > 0.7 ? 14 : 11)
       : (zoom > 0.7 ? 12 : 10)
-    ctx.font = `${isHeader ? '' : 'italic '}${sz}px 'Cormorant Garamond', Georgia, serif`
+    ctx.font = `${isHeader ? '' : 'italic '}${sz}px ${FONT_SERIF}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
@@ -273,7 +294,7 @@ function drawRootLabel(
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
-  ctx.font = `italic ${size}px 'Cormorant Garamond', Georgia, serif`
+  ctx.font = `italic ${size}px ${FONT_SERIF}`
   ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
   ctx.fillText(n.label, n.x, n.y - size * 0.05)
   // Línea decorativa debajo

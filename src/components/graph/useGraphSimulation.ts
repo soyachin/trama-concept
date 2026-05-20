@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import p5 from "p5";
 import * as d3 from "d3-force";
 import type { TNode, TEdge } from "../../types/graph";
-import { BG, BAYER } from "../../config/visuals";
+import { BG, BAYER, FONT_SERIF, FONT_MONO } from "../../config/visuals";
 import { initLayout } from "../../lib/layout";
 import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
 
@@ -208,21 +208,21 @@ export function useGraphSimulation(
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillStyle = "#f0ede4";
-          ctx.font = `italic 21px 'Cormorant Garamond', Georgia, serif`;
+          ctx.font = `italic 21px ${FONT_SERIF}`;
           ctx.fillText(
             '"Trama es el mapa de lo que tu universidad ya sabe,',
             w / 2,
             h / 2 - 24,
           );
           ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
-          ctx.font = `12px 'Space Mono', 'Courier New', monospace`;
+          ctx.font = `12px ${FONT_MONO}`;
           ctx.fillStyle = "rgba(240,237,228,0.48)";
           ctx.fillText(
             "Explora. Cada nodo es una puerta. Cada arista, una conversación pendiente.",
             w / 2,
             h / 2 + 50,
           );
-          ctx.font = `10px 'Space Mono', monospace`;
+          ctx.font = `10px ${FONT_MONO}`;
           ctx.fillStyle = `rgba(200,117,58,0.65)`;
           ctx.fillText("[ click para comenzar ]", w / 2, h / 2 + 84);
         } else if (s.intro === "dissolving") {
@@ -245,7 +245,7 @@ export function useGraphSimulation(
             ctx.fillStyle = `rgba(240,237,228,${ta})`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.font = `italic 21px 'Cormorant Garamond', Georgia, serif`;
+            ctx.font = `italic 21px ${FONT_SERIF}`;
             ctx.fillText(
               '"Trama es el mapa de lo que tu universidad ya sabe,',
               w / 2,

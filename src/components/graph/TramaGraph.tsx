@@ -121,14 +121,14 @@ export function TramaGraph() {
       <div style={{
         position: "fixed",
         inset: 0,
-        background: "#0f0e0b",
+        background: "var(--color-bg)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontFamily: "var(--font-serif)",
         fontStyle: "italic",
         fontSize: 21,
-        color: "#f0ede4",
+        color: "var(--color-fg)",
       }}>
         cargando trama…
       </div>
@@ -140,7 +140,7 @@ export function TramaGraph() {
       style={{
         position: "fixed",
         inset: 0,
-        background: "#0f0e0b",
+        background: "var(--color-bg)",
         overflow: "hidden",
       }}
     >
@@ -187,10 +187,10 @@ export function TramaGraph() {
           top: 18,
           left: 22,
           zIndex: 20,
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: "var(--font-serif)",
           fontStyle: "italic",
           fontSize: 22,
-          color: "#f0ede4",
+          color: "var(--color-fg)",
           letterSpacing: "0.04em",
           opacity: 0.9,
           pointerEvents: "none",
@@ -206,9 +206,9 @@ export function TramaGraph() {
           top: 18,
           right: 18,
           zIndex: 20,
-          fontFamily: "'Space Mono', monospace",
+          fontFamily: "var(--font-mono)",
           fontSize: 10,
-          color: "rgba(240,237,228,0.38)",
+          color: "color-mix(in srgb, var(--color-fg) 38%, transparent)",
           letterSpacing: "0.08em",
           textAlign: "right",
           pointerEvents: "none",

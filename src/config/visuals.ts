@@ -4,6 +4,9 @@ export const BG   = '#0f0e0b'
 export const FG   = '#f0ede4'
 export const ACC  = '#c8753a'
 
+export const FONT_SERIF = "'Cormorant Garamond', Georgia, serif"
+export const FONT_MONO  = "'Space Mono', 'Courier New', monospace"
+
 export const NODE_VISUALS: Record<string, NodeVisual> = {
   'Root':                  { ditherDensity: 0,    baseRadius: 0,  noiseAmp: 0,    noiseFreq: 0,    scaleX: 1.00, scaleY: 1.00 },
   'AreaHeader':            { ditherDensity: 0.62, baseRadius: 15, noiseAmp: 0.18, noiseFreq: 0.55, scaleX: 1.00, scaleY: 1.00 },
@@ -42,26 +45,28 @@ export interface RopeConfig {
   spread: number
   weight: number
   twist: number
+  directed: boolean
+  waveSpeed: number
 }
 
 export const ROPE_CONFIGS: Record<string, RopeConfig> = {
-  // Quipu social
-  alianzaCon:    { strands: 3, spread: 2.8, weight: 1.2, twist: 0.8 },
-  organizadoPor: { strands: 3, spread: 2.4, weight: 1.1, twist: 0.7 },
-  coorganizadoPor:{strands: 2, spread: 2.0, weight: 0.9, twist: 0.5 },
-  asesoradoPor:  { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3 },
+  // Quipu social — alianzaCon es simétrica (owl:SymmetricProperty).
+  alianzaCon:    { strands: 3, spread: 2.8, weight: 1.2, twist: 0.8, directed: false, waveSpeed: 0.6 },
+  organizadoPor: { strands: 3, spread: 2.4, weight: 1.1, twist: 0.7, directed: true,  waveSpeed: 0.5 },
+  coorganizadoPor:{strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5 },
+  asesoradoPor:  { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3 },
   // Cuerdas estructurales del quipu (raíz → área → nodo).
-  quipu:         { strands: 4, spread: 3.0, weight: 1.3, twist: 0.6 },
-  perteneceArea: { strands: 2, spread: 1.6, weight: 0.7, twist: 0.3 },
-  // Legacy (otros quipus, deprecan cuando salgan los suyos).
-  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4 },
-  dictadoPor:    { strands: 2, spread: 2.0, weight: 0.9, twist: 0.5 },
-  perteneceA:    { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3 },
-  prerequisitoDe:{ strands: 1, spread: 0,   weight: 0.8, twist: 0   },
-  miembroDe:     { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6 },
-  investigaEn:   { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6 },
-  participaEn:   { strands: 4, spread: 3.5, weight: 1.4, twist: 1.0 },
-  ubicadoEn:     { strands: 1, spread: 0,   weight: 0.6, twist: 0   },
+  quipu:         { strands: 4, spread: 3.0, weight: 1.3, twist: 0.6, directed: true,  waveSpeed: 0.4 },
+  perteneceArea: { strands: 2, spread: 1.6, weight: 0.7, twist: 0.3, directed: true,  waveSpeed: 0.3 },
+  // Otros quipus.
+  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4, directed: true,  waveSpeed: 0.4 },
+  dictadoPor:    { strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5 },
+  perteneceA:    { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3 },
+  prerequisitoDe:{ strands: 1, spread: 0,   weight: 0.8, twist: 0,   directed: true,  waveSpeed: 0.7 },
+  miembroDe:     { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5 },
+  investigaEn:   { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5 },
+  participaEn:   { strands: 4, spread: 3.5, weight: 1.4, twist: 1.0, directed: true,  waveSpeed: 0.8 },
+  ubicadoEn:     { strands: 1, spread: 0,   weight: 0.6, twist: 0,   directed: true,  waveSpeed: 0.2 },
 }
 
 export const EDGE_VISUALS: Record<string, EdgeVisual> = {
