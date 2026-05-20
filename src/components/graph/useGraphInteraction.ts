@@ -33,7 +33,6 @@ function hitTest(
 ): TNode | null {
   const [gx, gy] = toGraph(mx, my, s, canvasW, canvasH);
   for (const n of nodes) {
-    if (n.type === 'Root') continue;
     const dx = gx - n.x,
       dy = gy - n.y;
     if (dx * dx + dy * dy < 18 * 18) return n;
@@ -133,7 +132,7 @@ export function useGraphInteraction(
       const cv = getCanvas();
       if (!cv) return;
       const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
-      if (n && !n.synthetic) {
+      if (n) {
         s.dragNode = n;
         n.fx = n.x;
         n.fy = n.y;
@@ -300,7 +299,7 @@ export function useGraphInteraction(
         const n = cv
           ? hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight)
           : null;
-        if (n && !n.synthetic) {
+        if (n) {
           touchDragNode = n;
           n.fx = n.x;
           n.fy = n.y;
