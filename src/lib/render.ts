@@ -278,7 +278,7 @@ export function drawKnot(
     const sz = isHeader
       ? (zoom > 0.7 ? 14 : 11)
       : (zoom > 0.7 ? 12 : 10)
-    ctx.font = `${isHeader ? '' : 'italic '}${sz}px ${fontSerif()}`
+    ctx.font = `${sz}px ${fontSerif()}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
@@ -298,7 +298,7 @@ function drawRootLabel(
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
-  ctx.font = `italic ${size}px ${fontSerif()}`
+  ctx.font = `${size}px ${fontSerif()}`
   ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
   ctx.fillText(n.label, n.x, n.y - size * 0.05)
   // Línea decorativa debajo

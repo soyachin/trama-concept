@@ -188,7 +188,7 @@ export function TramaGraph() {
           left: 22,
           zIndex: 20,
           fontFamily: "var(--font-wordmark)",
-          fontSize: 22,
+          fontSize: 32,
           color: "var(--color-fg)",
           letterSpacing: "0.04em",
           opacity: 0.9,
