@@ -18,18 +18,35 @@ let _fontWordmark = ''
 // colores de área cacheados: groupKey -> [r, g, b] (0-255)
 let _areaColors: Record<string, [number, number, number]> = {}
 
-function cssVarToRgb(s: CSSStyleDeclaration, name: string): [number, number, number] | null {
-  const raw = s.getPropertyValue(name).trim()
-  if (!raw) return null
-  const color = parse(raw)
-  if (!color) return null
-  const rgb = toRgb(color)
-  if (!rgb) return null
-  return [Math.round(rgb.r * 255), Math.round(rgb.g * 255), Math.round(rgb.b * 255)]
-}
+// vars CSS que seteamos dinámicamente (para limpiar entre quipus)
+let _dynamicVars: string[] = []
+
+// paleta oklch para asignación automática de áreas
+const AREA_PALETTE = [
+  'oklch(68% 0.18 264)',   // azul
+  'oklch(72% 0.16 42)',    // naranja
+  'oklch(70% 0.17 142)',   // verde
+  'oklch(75% 0.15 320)',   // magenta
+  'oklch(65% 0.16 200)',   // cyan
+  'oklch(78% 0.14 80)',    // amarillo
+  'oklch(60% 0.18 30)',    // rojo
+  'oklch(70% 0.13 160)',   // teal
+]
+
+let _nextPaletteIdx = 0
 
 function tokenName(key: string): string {
   return '--color-area-' + key.toLowerCase().replace(/\s+/g, '-')
+}
+
+function pickAreaColor(): string {
+  if (_nextPaletteIdx < AREA_PALETTE.length) {
+    return AREA_PALETTE[_nextPaletteIdx++]
+  }
+  // generar color adicional con hue espaciado (47 es primo → buena distribución)
+  const hue = (_nextPaletteIdx * 47) % 360
+  _nextPaletteIdx++
+  return `oklch(70% 0.15 ${hue})`
 }
 
 export function refreshTokens() {
@@ -40,33 +57,47 @@ export function refreshTokens() {
   _fontSerif = s.getPropertyValue('--font-serif').trim()
   _fontMono  = s.getPropertyValue('--font-mono').trim()
   _fontWordmark = s.getPropertyValue('--font-wordmark').trim()
+}
 
-  // recargar colores de área
-  const fresh: Record<string, [number, number, number]> = {}
-  const defaultColor = cssVarToRgb(s, '--color-area-default')
+/** Asigna colores de área secuencialmente desde la paleta oklch.
+ *  No repite colores dentro del mismo quipu. Si hay más áreas que colores
+ *  predefinidos, genera colores adicionales automáticamente.
+ *  Limpia vars dinámicas de quipus anteriores y cachea los rgb. */
+export function assignAreaColors(groups: { key: string }[]) {
+  const root = document.documentElement
 
-  // leer todos los tokens que empiecen con --color-area-
-  // (no hay API estándar para listar custom properties, así que
-  // hardcodeamos las áreas conocidas y usamos default para el resto)
-  const knownAreas = ['especializada', 'arte-cultura', 'clubes-deportivos']
-  for (const area of knownAreas) {
-    const rgb = cssVarToRgb(s, tokenName(area))
-    if (rgb) fresh[area] = rgb
+  // limpiar vars dinámicas anteriores
+  for (const v of _dynamicVars) {
+    root.style.removeProperty(v)
   }
-
-  // mapeo por groupKey exacto (puede venir con espacios/mayúsculas del API)
+  _dynamicVars = []
   _areaColors = {}
-  const addMapping = (key: string, rgb: [number, number, number]) => {
-    _areaColors[key] = rgb
-    _areaColors[key.toLowerCase()] = rgb
+  _nextPaletteIdx = 0
+
+  for (const g of groups) {
+    const varName = tokenName(g.key)
+    const color = pickAreaColor()
+
+    root.style.setProperty(varName, color)
+    _dynamicVars.push(varName)
+
+    // cachear rgb directamente
+    const parsed = parse(color)
+    if (parsed) {
+      const rgb = toRgb(parsed)
+      if (rgb) {
+        const val: [number, number, number] = [
+          Math.round(rgb.r * 255),
+          Math.round(rgb.g * 255),
+          Math.round(rgb.b * 255),
+        ]
+        _areaColors[g.key] = val
+        _areaColors[g.key.toLowerCase()] = val
+      }
+    }
   }
 
-  if (fresh['especializada']) addMapping('Especializada', fresh['especializada'])
-  if (fresh['arte-cultura']) addMapping('Arte y Cultura', fresh['arte-cultura'])
-  if (fresh['clubes-deportivos']) addMapping('Clubes Deportivos', fresh['clubes-deportivos'])
-
-  // fallback para cualquier área no conocida (resuelto lazy en areaColor())
-  _areaColors['__default__'] = defaultColor ?? [100, 149, 237]
+  refreshTokens()
 }
 
 export function bg()        { return _bg }
@@ -78,10 +109,10 @@ export function fontWordmark() { return _fontWordmark }
 
 /** Devuelve [r, g, b] para un groupKey de área. Fallback a default. */
 export function areaColor(groupKey: string | undefined): [number, number, number] {
-  if (!groupKey) return _areaColors['__default__']
+  if (!groupKey) return [100, 149, 237]
   const direct = _areaColors[groupKey]
   if (direct) return direct
   const lower = _areaColors[groupKey.toLowerCase()]
   if (lower) return lower
-  return _areaColors['__default__']
+  return [100, 149, 237]
 }

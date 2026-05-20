@@ -206,10 +206,18 @@ export function drawKnot(
 
   // LOD: at very low zoom, just draw a dot
   if (zoom < 0.25) {
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
-    ctx.beginPath()
-    ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
-    ctx.fill()
+    if (n.type === 'AreaHeader') {
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha})`
+      ctx.lineWidth = 1.2
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
+      ctx.stroke()
+    } else {
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
+      ctx.fill()
+    }
     return
   }
 
@@ -237,14 +245,34 @@ export function drawKnot(
 
   // LOD: at mid zoom, simplified knots
   if (zoom < 0.55) {
-    ctx.beginPath()
-    ctx.arc(0, 0, R, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`
-    ctx.fill()
+    if (n.type === 'AreaHeader') {
+      // Nudo sintético: solo contorno
+      ctx.beginPath()
+      ctx.arc(0, 0, R, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+    } else {
+      ctx.beginPath()
+      ctx.arc(0, 0, R, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`
+      ctx.fill()
+    }
   } else {
     // Full detail knot shapes per type
     switch (n.type) {
       case 'AreaHeader':
+        // Nudo agrupador sintético: círculo con contorno y punto central
+        ctx.beginPath()
+        ctx.arc(0, 0, R, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`
+        ctx.lineWidth = 1
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(0, 0, R * 0.35, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.5})`
+        ctx.fill()
+        break
       case 'OrganizacionEstudiantil':
       case 'Club':
       case 'Carrera':

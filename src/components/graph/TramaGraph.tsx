@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
 import { UI_TEXT, UI_COLOR, toReactStyle } from "../../config/typography";
+import { assignAreaColors } from "../../lib/tokens";
 import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
@@ -49,6 +50,7 @@ export function TramaGraph() {
       try {
         const data = await fetchQuipuGraph(activeQuipuId);
         if (cancelled) return;
+        assignAreaColors(data.groups);
         setNodes(data.nodes);
         setEdges(data.edges);
         setStats({
@@ -59,6 +61,7 @@ export function TramaGraph() {
         console.warn("API unavailable, using fallback quipu data");
         const data = getDummyQuipuGraph();
         if (cancelled) return;
+        assignAreaColors(data.groups);
         setNodes(data.nodes);
         setEdges(data.edges);
         setStats({
