@@ -45,21 +45,21 @@ export interface RopeConfig {
 
 export const ROPE_CONFIGS: Record<string, RopeConfig> = {
   // Quipu social — alianzaCon es simétrica (owl:SymmetricProperty).
-  alianzaCon:    { strands: 3, spread: 2.8, weight: 1.2, twist: 0.8, directed: false, waveSpeed: 0.6, dash: [10, 6]      },
-  organizadoPor: { strands: 3, spread: 2.4, weight: 1.1, twist: 0.7, directed: true,  waveSpeed: 0.5, dash: []            },
+  alianzaCon:    { strands: 2, spread: 2.8, weight: 1.2, twist: 4, directed: false, waveSpeed: 4, dash: [10, 6]      },
+  organizadoPor: { strands: 2, spread: 2.4, weight: 1.1, twist: 0.7, directed: true,  waveSpeed: 0.5, dash: []            },
   coorganizadoPor:{strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5, dash: [6, 4]       },
   asesoradoPor:  { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3, dash: [4, 4]       },
   // Cuerdas estructurales del quipu (raíz → área → nodo).
-  quipu:         { strands: 4, spread: 3.0, weight: 1.3, twist: 0.6, directed: true,  waveSpeed: 0.4, dash: []            },
-  perteneceArea: { strands: 2, spread: 1.6, weight: 0.7, twist: 0.3, directed: true,  waveSpeed: 0.3, dash: []            },
+  quipu:         { strands: 3, spread: 3.0, weight: 1.3, twist: 4, directed: false,  waveSpeed: 2, dash: []            },
+  perteneceArea: { strands: 1, spread: 1.6, weight: 0.7, twist: 0.3, directed: false,  waveSpeed: 0.3, dash: []            },
   // Otros quipus.
-  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4, directed: true,  waveSpeed: 0.4, dash: [2, 5]       },
+  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4, directed: false,  waveSpeed: 0.4, dash: [2, 5]       },
   dictadoPor:    { strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5, dash: []            },
   perteneceA:    { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3, dash: [6, 3]       },
   prerequisitoDe:{ strands: 1, spread: 0,   weight: 0.8, twist: 0,   directed: true,  waveSpeed: 0.7, dash: [6, 3, 1, 3] },
-  miembroDe:     { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
-  investigaEn:   { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
-  participaEn:   { strands: 4, spread: 3.5, weight: 1.4, twist: 1.0, directed: true,  waveSpeed: 0.8, dash: []            },
+  miembroDe:     { strands: 1, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
+  investigaEn:   { strands: 1, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
+  participaEn:   { strands: 1, spread: 3.5, weight: 1.4, twist: 1.0, directed: true,  waveSpeed: 0.8, dash: []            },
   ubicadoEn:     { strands: 1, spread: 0,   weight: 0.6, twist: 0,   directed: true,  waveSpeed: 0.2, dash: [3, 4]       },
 }
 
