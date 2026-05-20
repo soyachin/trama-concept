@@ -199,22 +199,24 @@ export function TramaGraph() {
       </div>
 
       {/* Stats */}
-      <div
-        style={{
-          position: "absolute",
-          top: 18,
-          right: 18,
-          zIndex: 20,
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          color: "color-mix(in srgb, var(--color-fg) 38%, transparent)",
-          letterSpacing: "0.08em",
-          textAlign: "right",
-          pointerEvents: "none",
-        }}
-      >
-        {stats.nodes} nudos · {stats.edges} cuerdas
-      </div>
+      {panelNode === null && (
+        <div
+          style={{
+            position: "absolute",
+            top: 18,
+            right: 18,
+            zIndex: 20,
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            color: "color-mix(in srgb, var(--color-fg) 38%, transparent)",
+            letterSpacing: "0.08em",
+            textAlign: "right",
+            pointerEvents: "none",
+          }}
+        >
+          {stats.nodes} nudos · {stats.edges} cuerdas
+        </div>
+      )}
     </div>
   );
 }
