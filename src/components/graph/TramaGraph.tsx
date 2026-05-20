@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
+import { UI_TEXT, UI_COLOR, toReactStyle } from "../../config/typography";
 import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
@@ -121,14 +122,12 @@ export function TramaGraph() {
       <div style={{
         position: "fixed",
         inset: 0,
-        background: "var(--color-bg)",
+        background: UI_COLOR.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "var(--font-serif)",
-        fontStyle: "italic",
-        fontSize: 21,
-        color: "var(--color-fg)",
+        ...toReactStyle(UI_TEXT.loading),
+        color: UI_COLOR.fg,
       }}>
         cargando trama…
       </div>
@@ -187,10 +186,8 @@ export function TramaGraph() {
           top: 18,
           left: 22,
           zIndex: 20,
-          fontFamily: "var(--font-wordmark)",
-          fontSize: 32,
-          color: "var(--color-fg)",
-          letterSpacing: "0.04em",
+          ...toReactStyle(UI_TEXT.wordmark),
+          color: UI_COLOR.fg,
           opacity: 0.9,
           pointerEvents: "none",
         }}
@@ -206,10 +203,8 @@ export function TramaGraph() {
             top: 18,
             right: 18,
             zIndex: 20,
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            color: "color-mix(in srgb, var(--color-fg) 38%, transparent)",
-            letterSpacing: "0.08em",
+            ...toReactStyle(UI_TEXT.stats),
+            color: UI_COLOR.fgBarely,
             textAlign: "right",
             pointerEvents: "none",
           }}

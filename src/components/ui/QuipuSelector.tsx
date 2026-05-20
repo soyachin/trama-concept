@@ -1,4 +1,5 @@
 import type { QuipuSummary } from '../../types/graph'
+import { UI_TEXT, UI_COLOR, toReactStyle } from '../../config/typography'
 
 interface QuipuSelectorProps {
   quipus: QuipuSummary[]
@@ -19,7 +20,7 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
       gap: 4,
       background: 'color-mix(in srgb, var(--color-bg) 62%, transparent)',
       backdropFilter: 'blur(6px)',
-      border: '1px solid var(--color-border-subtle)',
+      border: `1px solid ${UI_COLOR.borderSubtle}`,
       borderRadius: 999,
       padding: '4px 6px',
       pointerEvents: 'auto',
@@ -34,19 +35,16 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
             onClick={() => isAvailable && onSelect(q.id)}
             title={q.description + (isAvailable ? '' : ' · próximamente')}
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
+              ...toReactStyle(UI_TEXT.navLabel),
               padding: '6px 14px',
               borderRadius: 999,
               border: '1px solid transparent',
               background: isActive ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent',
               color: isActive
-                ? 'var(--color-accent)'
+                ? UI_COLOR.accent
                 : isAvailable
-                  ? 'color-mix(in srgb, var(--color-fg) 78%, transparent)'
-                  : 'color-mix(in srgb, var(--color-fg) 22%, transparent)',
+                  ? UI_COLOR.fgBright
+                  : UI_COLOR.fgFaint,
               cursor: isAvailable ? 'pointer' : 'default',
               transition: 'all 160ms ease',
             }}

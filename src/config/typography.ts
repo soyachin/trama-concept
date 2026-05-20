@@ -7,7 +7,7 @@
 // las familias se leen de tokens.ts (fuente única: css custom properties).
 // los tamaños responsivos al zoom se manejan con arrays o funciones.
 
-import { fontSerif, fontMono } from '../lib/tokens'
+import { fontSerif, fontMono, fontWordmark } from '../lib/tokens'
 
 export interface TextStyle {
   family: () => string
@@ -24,6 +24,138 @@ export function composeFont(ts: TextStyle, sizeOverride?: number): string {
   const sz = sizeOverride ?? ts.size
   return `${s}${w}${sz}px ${ts.family()}`
 }
+
+// ─── tokens de UI (React) ────────────────────────────────────────
+// misma semántica que TEXT pero exporta objetos listos para
+// atributo `style` de JSX.  la familia se resuelve vía función
+// para que refreshTokens() en runtime se refleje sin recargar.
+
+export interface UITextStyle {
+  family: () => string
+  size: number
+  weight: number
+  style: 'normal' | 'italic'
+  lineHeight?: number
+  letterSpacing?: string
+  textTransform?: string
+}
+
+/** Convierte un UITextStyle a objeto compatible con `style={}` de React. */
+export function toReactStyle(ts: UITextStyle): React.CSSProperties {
+  return {
+    fontFamily: ts.family(),
+    fontSize: ts.size,
+    fontWeight: ts.weight,
+    fontStyle: ts.style,
+    lineHeight: ts.lineHeight,
+    letterSpacing: ts.letterSpacing,
+    textTransform: ts.textTransform,
+  }
+}
+
+export const UI_TEXT = {
+  // título principal del panel (nombre del nodo)
+  panelTitle: {
+    family: fontSerif,
+    size: 23,
+    weight: 400,
+    style: 'italic' as const,
+    lineHeight: 1.15,
+  },
+  // subtítulo / conexiones en el panel
+  panelSubtitle: {
+    family: fontSerif,
+    size: 14,
+    weight: 400,
+    style: 'italic' as const,
+  },
+  // cuerpo del panel (descripción)
+  panelBody: {
+    family: fontMono,
+    size: 10.5,
+    weight: 400,
+    style: 'normal' as const,
+    lineHeight: 1.65,
+  },
+  // etiquetas de metadatos en el panel
+  panelMeta: {
+    family: fontMono,
+    size: 8.5,
+    weight: 400,
+    style: 'normal' as const,
+  },
+  // valores de metadatos en filas
+  panelValue: {
+    family: fontMono,
+    size: 9.5,
+    weight: 400,
+    style: 'normal' as const,
+  },
+  // chips / tags
+  panelTag: {
+    family: fontMono,
+    size: 9,
+    weight: 400,
+    style: 'normal' as const,
+  },
+  // etiqueta de sección "CONEXIONES"
+  panelSection: {
+    family: fontMono,
+    size: 9,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.14em',
+  },
+  // tipo de nodo en el panel
+  panelKind: {
+    family: fontMono,
+    size: 9.5,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.18em',
+    textTransform: 'uppercase' as const,
+  },
+  // buscador
+  searchInput: {
+    family: fontMono,
+    size: 11.5,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.04em',
+  },
+  // wordmark "trama"
+  wordmark: {
+    family: fontWordmark,
+    size: 32,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.04em',
+  },
+  // selector de quipus
+  navLabel: {
+    family: fontMono,
+    size: 10,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  // stats en esquina
+  stats: {
+    family: fontMono,
+    size: 10,
+    weight: 400,
+    style: 'normal' as const,
+    letterSpacing: '0.08em',
+  },
+  // pantalla de carga
+  loading: {
+    family: fontSerif,
+    size: 21,
+    weight: 400,
+    style: 'italic' as const,
+  },
+} satisfies Record<string, UITextStyle>
 
 // estilos semánticos del canvas. cada uno corresponde a un contexto
 // visual específico del grafo.
@@ -146,3 +278,31 @@ export const COLOR = {
   // ─── leyenda ───
   legend:         { base: fg,  alpha: 0.28 },
 } satisfies Record<string, ColorRole>
+
+// ─── paleta semántica para React (inline styles) ─────────────────
+// usa directamente las css custom properties del root; así un cambio
+// de tema (ej. data-theme="dark") se refleja sin tocar JS.
+// para canvas se sigue usando composeRgba(COLOR.…) más arriba.
+
+export const UI_COLOR = {
+  fg:                'var(--color-fg)',
+  bg:                'var(--color-bg)',
+  accent:            'var(--color-accent)',
+  accentBorder:      'var(--color-accent-border)',
+
+  fgMuted:           'color-mix(in srgb, var(--color-fg) 58%, transparent)',
+  fgSubtle:          'color-mix(in srgb, var(--color-fg) 32%, transparent)',
+  fgFaint:           'color-mix(in srgb, var(--color-fg) 22%, transparent)',
+  fgBarely:          'color-mix(in srgb, var(--color-fg) 38%, transparent)',
+  fgBright:          'color-mix(in srgb, var(--color-fg) 78%, transparent)',
+  fgVeryBright:      'color-mix(in srgb, var(--color-fg) 70%, transparent)',
+  fgDim:             'color-mix(in srgb, var(--color-fg) 45%, transparent)',
+  fgVerySubtle:      'color-mix(in srgb, var(--color-fg) 30%, transparent)',
+
+  border:            'var(--color-border)',
+  borderSubtle:      'var(--color-border-subtle)',
+  borderVisible:     'var(--color-border-visible)',
+
+  bgPanel:           'var(--color-bg-panel)',
+  bgElevated:        'var(--color-bg-elevated)',
+} as const
