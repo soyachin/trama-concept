@@ -1,3 +1,5 @@
+import { UI_TEXT, UI_COLOR, toReactStyle } from '../../config/typography'
+
 interface SearchBarProps {
   value: string
   onChange: (v: string) => void
@@ -13,8 +15,8 @@ export function SearchBar({ value, onChange, offset }: SearchBarProps) {
       transform: offset ? 'none' : 'translateX(-50%)',
       zIndex: 20,
       transition: 'left 0.35s cubic-bezier(0.22,1,0.36,1)',
-      background: 'var(--color-bg-elevated)',
-      border: '1px solid var(--color-border-visible)',
+      background: UI_COLOR.bgElevated,
+      border: `1px solid ${UI_COLOR.borderVisible}`,
       borderRadius: 4,
       boxShadow: 'var(--shadow-ui)',
     }}>
@@ -26,13 +28,11 @@ export function SearchBar({ value, onChange, offset }: SearchBarProps) {
         style={{
           background: 'transparent',
           border: 'none',
-          color: 'var(--color-fg)',
+          color: UI_COLOR.fg,
           padding: '9px 18px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11.5,
+          ...toReactStyle(UI_TEXT.searchInput),
           outline: 'none',
           width: 252,
-          letterSpacing: '0.04em',
         }}
       />
     </div>

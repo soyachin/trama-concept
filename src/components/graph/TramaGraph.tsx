@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
+import { UI_TEXT, UI_COLOR, toReactStyle } from "../../config/typography";
+import { assignAreaColors } from "../../lib/tokens";
 import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
@@ -48,6 +50,7 @@ export function TramaGraph() {
       try {
         const data = await fetchQuipuGraph(activeQuipuId);
         if (cancelled) return;
+        assignAreaColors(data.groups);
         setNodes(data.nodes);
         setEdges(data.edges);
         setStats({
@@ -58,6 +61,7 @@ export function TramaGraph() {
         console.warn("API unavailable, using fallback quipu data");
         const data = getDummyQuipuGraph();
         if (cancelled) return;
+        assignAreaColors(data.groups);
         setNodes(data.nodes);
         setEdges(data.edges);
         setStats({
@@ -121,14 +125,12 @@ export function TramaGraph() {
       <div style={{
         position: "fixed",
         inset: 0,
-        background: "var(--color-bg)",
+        background: UI_COLOR.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "var(--font-serif)",
-        fontStyle: "italic",
-        fontSize: 21,
-        color: "var(--color-fg)",
+        ...toReactStyle(UI_TEXT.loading),
+        color: UI_COLOR.fg,
       }}>
         cargando trama…
       </div>
@@ -187,10 +189,8 @@ export function TramaGraph() {
           top: 18,
           left: 22,
           zIndex: 20,
-          fontFamily: "var(--font-wordmark)",
-          fontSize: 32,
-          color: "var(--color-fg)",
-          letterSpacing: "0.04em",
+          ...toReactStyle(UI_TEXT.wordmark),
+          color: UI_COLOR.fg,
           opacity: 0.9,
           pointerEvents: "none",
         }}
@@ -199,22 +199,22 @@ export function TramaGraph() {
       </div>
 
       {/* Stats */}
-      <div
-        style={{
-          position: "absolute",
-          top: 18,
-          right: 18,
-          zIndex: 20,
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          color: "color-mix(in srgb, var(--color-fg) 38%, transparent)",
-          letterSpacing: "0.08em",
-          textAlign: "right",
-          pointerEvents: "none",
-        }}
-      >
-        {stats.nodes} nudos · {stats.edges} cuerdas
-      </div>
+      {panelNode === null && (
+        <div
+          style={{
+            position: "absolute",
+            top: 18,
+            right: 18,
+            zIndex: 20,
+            ...toReactStyle(UI_TEXT.stats),
+            color: UI_COLOR.fgBarely,
+            textAlign: "right",
+            pointerEvents: "none",
+          }}
+        >
+          {stats.nodes} nudos · {stats.edges} cuerdas
+        </div>
+      )}
     </div>
   );
 }

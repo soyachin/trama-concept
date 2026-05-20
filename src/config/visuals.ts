@@ -1,4 +1,5 @@
-import type { NodeVisual } from '../types/graph'
+import type { NodeVisual, TNode } from '../types/graph'
+import { areaColor } from '../lib/tokens'
 
 export const NODE_VISUALS: Record<string, NodeVisual> = {
   'Root':                  { ditherDensity: 0,    baseRadius: 0,  noiseAmp: 0,    noiseFreq: 0,    scaleX: 1.00, scaleY: 1.00 },
@@ -79,3 +80,24 @@ export const RELATIONAL_PREDICATES = [
 // Predicados estructurales del quipu (no son relaciones RDF reales; conectan
 // nodos sintéticos como raíz y nudos cabecera de área).
 export const STRUCTURAL_PREDICATES = ['quipu', 'perteneceArea']
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ]
+}
+
+/** Devuelve [r, g, b] para un nodo, priorizando su área (groupKey).
+ *  Fallback al color por tipo si no tiene área asignada. */
+export function getNodeColor(n: TNode): [number, number, number] {
+  const groupKey = n.type === 'AreaHeader' ? n.groupKey : n.groupKey
+  if (groupKey) {
+    return areaColor(groupKey)
+  }
+  const fallback = TYPE_COLORS[n.type]
+  if (fallback) return hexToRgb(fallback)
+  return hexToRgb('#6366f1')
+}

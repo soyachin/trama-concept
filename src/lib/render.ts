@@ -1,6 +1,7 @@
 import type { TNode, TEdge } from '../types/graph'
-import { TYPE_COLORS, ROPE_CONFIGS, BAYER } from '../config/visuals'
-import { fg, acc, fontSerif } from './tokens'
+import { getNodeColor, ROPE_CONFIGS, BAYER } from '../config/visuals'
+// fg/acc/bg are consumed via COLOR roles in typography.ts
+import { TEXT, composeFont, COLOR, composeRgba } from '../config/typography'
 
 export function rgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
@@ -45,22 +46,24 @@ export function getWovenTexture(w: number, h: number, dpr = 1): HTMLCanvasElemen
   wovenDpr = dpr
   const ctx = wovenCanvas.getContext('2d')!
   ctx.scale(dpr, dpr)
-  const [fr, fgr, fb] = rgb(fg())
-  const [ar, ag, ab] = rgb(acc())
+  const wovenH = composeRgba(COLOR.wovenLineH)
+  const wovenV = composeRgba(COLOR.wovenLineV)
+  const dotFg = composeRgba(COLOR.wovenDotFg)
+  const dotAcc = composeRgba(COLOR.wovenDotAcc)
   const spacing = 22
   for (let y = 0; y < h; y += spacing) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y)
-    ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.018)`; ctx.lineWidth = 0.5; ctx.stroke()
+    ctx.strokeStyle = wovenH; ctx.lineWidth = 0.5; ctx.stroke()
   }
   for (let x = 0; x < w; x += spacing) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h)
-    ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.014)`; ctx.lineWidth = 0.5; ctx.stroke()
+    ctx.strokeStyle = wovenV; ctx.lineWidth = 0.5; ctx.stroke()
   }
   for (let y = 0; y < h; y += spacing) {
     for (let x = 0; x < w; x += spacing) {
       const even = ((x / spacing + y / spacing) % 2 === 0)
       ctx.beginPath(); ctx.arc(x, y, 0.9, 0, Math.PI * 2)
-      ctx.fillStyle = even ? `rgba(${fr},${fgr},${fb},0.025)` : `rgba(${ar},${ag},${ab},0.02)`
+      ctx.fillStyle = even ? dotFg : dotAcc
       ctx.fill()
     }
   }
@@ -75,8 +78,13 @@ export function drawRope(
 ) {
   const cfg = ROPE_CONFIGS[e.predicate] ?? ROPE_CONFIGS.dictadoPor
 
-  const col = active ? acc() : fg()
-  const [cr, cg, cb] = rgb(col)
+  const ropeRole = active ? COLOR.ropeActive : COLOR.ropeBase
+  let ropeRgb: [number, number, number]
+  if (e.predicate === 'perteneceArea') {
+    ropeRgb = getNodeColor(src)
+  } else {
+    ropeRgb = rgb(ropeRole.base())
+  }
 
   const dx = tgt.x - src.x, dy = tgt.y - src.y
   const len = Math.hypot(dx, dy) || 1
@@ -92,7 +100,7 @@ export function drawRope(
     ctx.beginPath()
     ctx.moveTo(src.x, src.y)
     ctx.quadraticCurveTo(cx0, cy0, tgt.x, tgt.y)
-    ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha})`
+    ctx.strokeStyle = composeRgba(ropeRole, alpha, ropeRgb)
     ctx.lineWidth = cfg.weight * (active ? 1.6 : 1)
     ctx.setLineDash(cfg.dash)
     ctx.stroke()
@@ -123,7 +131,7 @@ export function drawRope(
         ? alpha
         : (alpha * (0.55 + 0.45 * (1 - Math.abs(si - (cfg.strands - 1) / 2) / Math.max(cfg.strands - 1, 1))))
 
-      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${strokeA})`
+      ctx.strokeStyle = composeRgba(ropeRole, strokeA, ropeRgb)
       ctx.lineWidth = cfg.weight * (active ? 1.6 : 1) * (si === Math.floor(cfg.strands / 2) ? 1.1 : 0.85)
       ctx.setLineDash([])
       ctx.stroke()
@@ -137,7 +145,7 @@ export function drawRope(
     const by2 = qbez(src.y, cy0, tgt.y, wt)
     ctx.beginPath()
     ctx.arc(bx2, by2, 3.2, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
+    ctx.fillStyle = composeRgba(ropeRole, alpha, ropeRgb)
     ctx.fill()
   }
 
@@ -158,7 +166,7 @@ export function drawRope(
     ctx.lineTo(ax - pnx * arrW, ay - pny * arrW)
     ctx.lineTo(ax + pnx * arrW, ay + pny * arrW)
     ctx.closePath()
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${active ? alpha : alpha * 0.7})`
+    ctx.fillStyle = composeRgba(ropeRole, active ? alpha : alpha * 0.7, ropeRgb)
     ctx.fill()
   }
 }
@@ -176,8 +184,7 @@ export function drawKnot(
     return
   }
 
-  const typeColor = TYPE_COLORS[n.type] ?? '#6366f1'
-  const [cr, cg, cb] = rgb(typeColor)
+  const [cr, cg, cb] = getNodeColor(n)
 
   const baseR = n.type === 'AreaHeader' ? 15
     : n.type === 'OrganizacionEstudiantil' ? 13
@@ -199,10 +206,18 @@ export function drawKnot(
 
   // LOD: at very low zoom, just draw a dot
   if (zoom < 0.25) {
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
-    ctx.beginPath()
-    ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
-    ctx.fill()
+    if (n.type === 'AreaHeader') {
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha})`
+      ctx.lineWidth = 1.2
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
+      ctx.stroke()
+    } else {
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, Math.max(2, R * 0.4), 0, Math.PI * 2)
+      ctx.fill()
+    }
     return
   }
 
@@ -230,14 +245,34 @@ export function drawKnot(
 
   // LOD: at mid zoom, simplified knots
   if (zoom < 0.55) {
-    ctx.beginPath()
-    ctx.arc(0, 0, R, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`
-    ctx.fill()
+    if (n.type === 'AreaHeader') {
+      // Nudo sintético: solo contorno
+      ctx.beginPath()
+      ctx.arc(0, 0, R, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+    } else {
+      ctx.beginPath()
+      ctx.arc(0, 0, R, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`
+      ctx.fill()
+    }
   } else {
     // Full detail knot shapes per type
     switch (n.type) {
       case 'AreaHeader':
+        // Nudo agrupador sintético: círculo con contorno y punto central
+        ctx.beginPath()
+        ctx.arc(0, 0, R, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`
+        ctx.lineWidth = 1
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(0, 0, R * 0.35, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.5})`
+        ctx.fill()
+        break
       case 'OrganizacionEstudiantil':
       case 'Club':
       case 'Carrera':
@@ -273,15 +308,13 @@ export function drawKnot(
   // Label — skip at very low zoom
   if (zoom > 0.35) {
     const isHeader = n.type === 'AreaHeader'
-    const labelCol = sel ? acc() : fg()
-    const [lr, lg, lb] = rgb(labelCol)
-    const sz = isHeader
-      ? (zoom > 0.7 ? 14 : 11)
-      : (zoom > 0.7 ? 12 : 10)
-    ctx.font = `${sz}px ${fontSerif()}`
+    const labelRole = sel ? COLOR.labelSelected : COLOR.labelBase
+    const ts = isHeader ? TEXT.areaHeader : TEXT.nodeLabel
+    const sz = zoom > 0.7 ? ts.size : Math.round(ts.size * 0.8)
+    ctx.font = composeFont(ts, sz)
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
+    ctx.fillStyle = composeRgba(labelRole, isHeader ? Math.min(1, alpha * 1.1) : alpha)
     ctx.fillText(n.label, n.x, n.y + R + 6)
   }
 }
@@ -293,20 +326,18 @@ function drawRootLabel(
   n: TNode, alpha: number, zoom: number,
 ) {
   if (zoom < 0.25) return
-  const [lr, lg, lb] = rgb(fg())
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
-  ctx.font = `${size}px ${fontSerif()}`
-  ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
+  const size = zoom > 0.8 ? TEXT.rootWordmark.size : zoom > 0.5 ? 24 : 18
+  ctx.font = composeFont(TEXT.rootWordmark, size)
+  ctx.fillStyle = composeRgba(COLOR.rootLabel, alpha)
   ctx.fillText(n.label, n.x, n.y - size * 0.05)
   // Línea decorativa debajo
-  const [ar, ag, ab] = rgb(acc())
   ctx.beginPath()
   ctx.moveTo(n.x - size * 1.6, n.y + size * 0.85)
   ctx.lineTo(n.x + size * 1.6, n.y + size * 0.85)
-  ctx.strokeStyle = `rgba(${ar},${ag},${ab},${alpha * 0.55})`
+  ctx.strokeStyle = composeRgba(COLOR.rootLine, alpha * 0.55)
   ctx.lineWidth = 0.8
   ctx.stroke()
   ctx.restore()
