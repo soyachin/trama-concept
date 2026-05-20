@@ -6,20 +6,7 @@ interface QuipuSelectorProps {
   onSelect: (id: string) => void
 }
 
-// Catálogo de quipus "futuros" que mostramos en gris para insinuar la
-// hoja de ruta del proyecto (ver CONCEPT.md). Cuando el backend exponga
-// la fase correspondiente, dejan de mostrarse acá porque ya vendrían en
-// `quipus` con status="active".
-const FUTURE_QUIPUS: QuipuSummary[] = [
-  { id: 'academico', label: 'Académico', description: 'Cursos, sílabos.', status: 'coming-soon' },
-  { id: 'investigacion', label: 'Investigación', description: 'Proyectos, grupos, labs.', status: 'coming-soon' },
-  { id: 'profesores', label: 'Profesores', description: 'Asesorías, líneas de trabajo.', status: 'coming-soon' },
-]
-
 export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps) {
-  const knownIds = new Set(quipus.map(q => q.id))
-  const ghosts = FUTURE_QUIPUS.filter(q => !knownIds.has(q.id))
-  const all = [...quipus, ...ghosts]
 
   return (
     <div style={{
@@ -37,7 +24,7 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
       padding: '4px 6px',
       pointerEvents: 'auto',
     }}>
-      {all.map(q => {
+      {quipus.map(q => {
         const isActive = q.id === activeId
         const isAvailable = q.status === 'active'
         return (
