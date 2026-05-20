@@ -44,9 +44,9 @@
   --color-node-carrera: #ec4899;
   --color-node-departamento: #14b8a6;
   --color-node-grupo: #f97316;
-  --font-serif: 'Scorpius', Georgia, serif;
-  --font-mono: 'SpaceNotorious', 'Courier New', monospace;
-  --font-wordmark: 'PicNic', 'Scorpius', serif;
+  --font-serif: 'Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --font-wordmark: 'PicNic', 'Garamond', serif;
   --panel-width: 292px;
   --transition-panel: transform 0.35s cubic-bezier(0.22,1,0.36,1);
 }
