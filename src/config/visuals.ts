@@ -1,8 +1,4 @@
-import type { NodeVisual, EdgeVisual } from '../types/graph'
-
-export const BG   = '#0f0e0b'
-export const FG   = '#f0ede4'
-export const ACC  = '#c8753a'
+import type { NodeVisual } from '../types/graph'
 
 export const NODE_VISUALS: Record<string, NodeVisual> = {
   'Root':                  { ditherDensity: 0,    baseRadius: 0,  noiseAmp: 0,    noiseFreq: 0,    scaleX: 1.00, scaleY: 1.00 },
@@ -42,43 +38,29 @@ export interface RopeConfig {
   spread: number
   weight: number
   twist: number
+  directed: boolean
+  waveSpeed: number
+  dash: number[]
 }
 
 export const ROPE_CONFIGS: Record<string, RopeConfig> = {
-  // Quipu social
-  alianzaCon:    { strands: 3, spread: 2.8, weight: 1.2, twist: 0.8 },
-  organizadoPor: { strands: 3, spread: 2.4, weight: 1.1, twist: 0.7 },
-  coorganizadoPor:{strands: 2, spread: 2.0, weight: 0.9, twist: 0.5 },
-  asesoradoPor:  { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3 },
+  // Quipu social — alianzaCon es simétrica (owl:SymmetricProperty).
+  alianzaCon:    { strands: 2, spread: 2.8, weight: 1.2, twist: 4, directed: false, waveSpeed: 4, dash: [10, 6]      },
+  organizadoPor: { strands: 2, spread: 2.4, weight: 1.1, twist: 0.7, directed: true,  waveSpeed: 0.5, dash: []            },
+  coorganizadoPor:{strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5, dash: [6, 4]       },
+  asesoradoPor:  { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3, dash: [4, 4]       },
   // Cuerdas estructurales del quipu (raíz → área → nodo).
-  quipu:         { strands: 4, spread: 3.0, weight: 1.3, twist: 0.6 },
-  perteneceArea: { strands: 2, spread: 1.6, weight: 0.7, twist: 0.3 },
-  // Legacy (otros quipus, deprecan cuando salgan los suyos).
-  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4 },
-  dictadoPor:    { strands: 2, spread: 2.0, weight: 0.9, twist: 0.5 },
-  perteneceA:    { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3 },
-  prerequisitoDe:{ strands: 1, spread: 0,   weight: 0.8, twist: 0   },
-  miembroDe:     { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6 },
-  investigaEn:   { strands: 3, spread: 2.2, weight: 1.0, twist: 0.6 },
-  participaEn:   { strands: 4, spread: 3.5, weight: 1.4, twist: 1.0 },
-  ubicadoEn:     { strands: 1, spread: 0,   weight: 0.6, twist: 0   },
-}
-
-export const EDGE_VISUALS: Record<string, EdgeVisual> = {
-  alianzaCon:     { weight: 1.4, dash: [10, 6]       },
-  organizadoPor:  { weight: 1.2, dash: []             },
-  coorganizadoPor:{ weight: 1.0, dash: [6, 4]        },
-  asesoradoPor:   { weight: 0.8, dash: [4, 4]        },
-  quipu:          { weight: 1.3, dash: []             },
-  perteneceArea:  { weight: 0.7, dash: []             },
-  usaContenidoDe: { weight: 0.7, dash: [2,  5]       },
-  dictadoPor:     { weight: 0.9, dash: []             },
-  perteneceA:     { weight: 0.8, dash: [6, 3]        },
-  prerequisitoDe: { weight: 0.7, dash: [6, 3, 1, 3]  },
-  miembroDe:      { weight: 1.0, dash: []             },
-  investigaEn:    { weight: 1.0, dash: []             },
-  participaEn:    { weight: 1.4, dash: []             },
-  ubicadoEn:      { weight: 0.6, dash: [3, 4]        },
+  quipu:         { strands: 3, spread: 3.0, weight: 1.3, twist: 4, directed: false,  waveSpeed: 2, dash: []            },
+  perteneceArea: { strands: 1, spread: 1.6, weight: 0.7, twist: 0.3, directed: false,  waveSpeed: 0.3, dash: []            },
+  // Otros quipus.
+  usaContenidoDe:{ strands: 2, spread: 1.6, weight: 0.7, twist: 0.4, directed: false,  waveSpeed: 0.4, dash: [2, 5]       },
+  dictadoPor:    { strands: 2, spread: 2.0, weight: 0.9, twist: 0.5, directed: true,  waveSpeed: 0.5, dash: []            },
+  perteneceA:    { strands: 2, spread: 1.8, weight: 0.8, twist: 0.3, directed: true,  waveSpeed: 0.3, dash: [6, 3]       },
+  prerequisitoDe:{ strands: 1, spread: 0,   weight: 0.8, twist: 0,   directed: true,  waveSpeed: 0.7, dash: [6, 3, 1, 3] },
+  miembroDe:     { strands: 1, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
+  investigaEn:   { strands: 1, spread: 2.2, weight: 1.0, twist: 0.6, directed: true,  waveSpeed: 0.5, dash: []            },
+  participaEn:   { strands: 1, spread: 3.5, weight: 1.4, twist: 1.0, directed: true,  waveSpeed: 0.8, dash: []            },
+  ubicadoEn:     { strands: 1, spread: 0,   weight: 0.6, twist: 0,   directed: true,  waveSpeed: 0.2, dash: [3, 4]       },
 }
 
 export const BAYER: number[][] = [

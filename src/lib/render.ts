@@ -1,5 +1,6 @@
 import type { TNode, TEdge } from '../types/graph'
-import { TYPE_COLORS, ROPE_CONFIGS, BAYER, ACC, FG } from '../config/visuals'
+import { TYPE_COLORS, ROPE_CONFIGS, BAYER } from '../config/visuals'
+import { fg, acc, fontSerif } from './tokens'
 
 export function rgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
@@ -44,20 +45,22 @@ export function getWovenTexture(w: number, h: number, dpr = 1): HTMLCanvasElemen
   wovenDpr = dpr
   const ctx = wovenCanvas.getContext('2d')!
   ctx.scale(dpr, dpr)
+  const [fr, fgr, fb] = rgb(fg())
+  const [ar, ag, ab] = rgb(acc())
   const spacing = 22
   for (let y = 0; y < h; y += spacing) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y)
-    ctx.strokeStyle = 'rgba(240,237,228,0.018)'; ctx.lineWidth = 0.5; ctx.stroke()
+    ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.018)`; ctx.lineWidth = 0.5; ctx.stroke()
   }
   for (let x = 0; x < w; x += spacing) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h)
-    ctx.strokeStyle = 'rgba(240,237,228,0.014)'; ctx.lineWidth = 0.5; ctx.stroke()
+    ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.014)`; ctx.lineWidth = 0.5; ctx.stroke()
   }
   for (let y = 0; y < h; y += spacing) {
     for (let x = 0; x < w; x += spacing) {
       const even = ((x / spacing + y / spacing) % 2 === 0)
       ctx.beginPath(); ctx.arc(x, y, 0.9, 0, Math.PI * 2)
-      ctx.fillStyle = even ? 'rgba(240,237,228,0.025)' : 'rgba(200,117,58,0.02)'
+      ctx.fillStyle = even ? `rgba(${fr},${fgr},${fb},0.025)` : `rgba(${ar},${ag},${ab},0.02)`
       ctx.fill()
     }
   }
@@ -72,7 +75,7 @@ export function drawRope(
 ) {
   const cfg = ROPE_CONFIGS[e.predicate] ?? ROPE_CONFIGS.dictadoPor
 
-  const col = active ? ACC : FG
+  const col = active ? acc() : fg()
   const [cr, cg, cb] = rgb(col)
 
   const dx = tgt.x - src.x, dy = tgt.y - src.y
@@ -80,7 +83,7 @@ export function drawRope(
   const nx = -dy / len, ny = dx / len
 
   const sag = len * 0.12
-  const wave = Math.sin(t * 0.6 + e.waveOff) * 0.3
+  const wave = Math.sin(t * cfg.waveSpeed + e.waveOff) * 0.3
   const cx0 = (src.x + tgt.x) / 2 + nx * sag * wave
   const cy0 = (src.y + tgt.y) / 2 + ny * sag * wave
 
@@ -91,8 +94,9 @@ export function drawRope(
     ctx.quadraticCurveTo(cx0, cy0, tgt.x, tgt.y)
     ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha})`
     ctx.lineWidth = cfg.weight * (active ? 1.6 : 1)
-    ctx.setLineDash([])
+    ctx.setLineDash(cfg.dash)
     ctx.stroke()
+    ctx.setLineDash([])
   } else {
     // Multi-strand twisted rope
     const steps = zoom > 1.2 ? 40 : 20
@@ -134,6 +138,27 @@ export function drawRope(
     ctx.beginPath()
     ctx.arc(bx2, by2, 3.2, 0, Math.PI * 2)
     ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
+    ctx.fill()
+  }
+
+  // Arrowhead for directed predicates (skip at very low zoom)
+  if (cfg.directed && zoom > 0.35) {
+    const at = 0.78
+    const ax = qbez(src.x, cx0, tgt.x, at)
+    const ay = qbez(src.y, cy0, tgt.y, at)
+    const tanX = 2 * (1 - at) * (cx0 - src.x) + 2 * at * (tgt.x - cx0)
+    const tanY = 2 * (1 - at) * (cy0 - src.y) + 2 * at * (tgt.y - cy0)
+    const tl = Math.hypot(tanX, tanY) || 1
+    const udx = tanX / tl, udy = tanY / tl
+    const arrLen = 7 * (active ? 1.4 : 1)
+    const arrW = 3.5 * (active ? 1.3 : 1)
+    const pnx = -udy, pny = udx
+    ctx.beginPath()
+    ctx.moveTo(ax + udx * arrLen, ay + udy * arrLen)
+    ctx.lineTo(ax - pnx * arrW, ay - pny * arrW)
+    ctx.lineTo(ax + pnx * arrW, ay + pny * arrW)
+    ctx.closePath()
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},${active ? alpha : alpha * 0.7})`
     ctx.fill()
   }
 }
@@ -248,12 +273,12 @@ export function drawKnot(
   // Label — skip at very low zoom
   if (zoom > 0.35) {
     const isHeader = n.type === 'AreaHeader'
-    const labelCol = sel ? ACC : FG
+    const labelCol = sel ? acc() : fg()
     const [lr, lg, lb] = rgb(labelCol)
     const sz = isHeader
       ? (zoom > 0.7 ? 14 : 11)
       : (zoom > 0.7 ? 12 : 10)
-    ctx.font = `${isHeader ? '' : 'italic '}${sz}px 'Cormorant Garamond', Georgia, serif`
+    ctx.font = `${sz}px ${fontSerif()}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.fillStyle = `rgba(${lr},${lg},${lb},${isHeader ? Math.min(1, alpha * 1.1) : alpha})`
@@ -268,16 +293,16 @@ function drawRootLabel(
   n: TNode, alpha: number, zoom: number,
 ) {
   if (zoom < 0.25) return
-  const [lr, lg, lb] = rgb(FG)
+  const [lr, lg, lb] = rgb(fg())
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const size = zoom > 0.8 ? 30 : zoom > 0.5 ? 24 : 18
-  ctx.font = `italic ${size}px 'Cormorant Garamond', Georgia, serif`
+  ctx.font = `${size}px ${fontSerif()}`
   ctx.fillStyle = `rgba(${lr},${lg},${lb},${alpha})`
   ctx.fillText(n.label, n.x, n.y - size * 0.05)
   // Línea decorativa debajo
-  const [ar, ag, ab] = rgb(ACC)
+  const [ar, ag, ab] = rgb(acc())
   ctx.beginPath()
   ctx.moveTo(n.x - size * 1.6, n.y + size * 0.85)
   ctx.lineTo(n.x + size * 1.6, n.y + size * 0.85)

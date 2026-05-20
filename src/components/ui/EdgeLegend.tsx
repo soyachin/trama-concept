@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { ROPE_CONFIGS } from '../../config/visuals'
+import { fg, fontMono } from '../../lib/tokens'
+import { rgb } from '../../lib/render'
 
 const LEGEND_ITEMS = [
   { pred: 'quipu',           label: 'quipu' },
@@ -27,7 +29,8 @@ export function RopeLegend() {
 
     ctx.clearRect(0, 0, 160, LEGEND_ITEMS.length * 18 + 8)
 
-    ctx.font = "8px 'Space Mono', monospace"
+    const [fr, fgr, fb] = rgb(fg())
+    ctx.font = `8px ${fontMono()}`
 
     LEGEND_ITEMS.forEach((item, i) => {
       const y = 12 + i * 18
@@ -40,12 +43,12 @@ export function RopeLegend() {
         ctx.beginPath()
         ctx.moveTo(8, y + off)
         ctx.lineTo(42, y + off)
-        ctx.strokeStyle = 'rgba(240,237,228,0.28)'
+        ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.28)`
         ctx.lineWidth = 0.9
         ctx.stroke()
       }
 
-      ctx.fillStyle = 'rgba(240,237,228,0.28)'
+      ctx.fillStyle = `rgba(${fr},${fgr},${fb},0.28)`
       ctx.fillText(item.label, 50, y + 3)
     })
   }, [])
