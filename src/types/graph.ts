@@ -7,11 +7,6 @@ export interface NodeVisual {
   scaleY: number
 }
 
-export interface EdgeVisual {
-  weight: number
-  dash: number[]
-}
-
 // Metadata embebida en cada nodo cuando viene del quipu. Valor: string,
 // arreglo de strings, o lista de relaciones (perteneceA, asesoradoPor, ...)
 // donde el objeto vive como hidden_type del quipu.
