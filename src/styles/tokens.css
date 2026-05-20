@@ -6,6 +6,22 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Scorpius';
+  src: url('../assets/fonts/scorpius.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SpaceNotorious';
+  src: url('../assets/fonts/SpaceNotoriousRounded.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-bg: #0f0e0b;
   --color-bg-panel: rgba(10,9,7,0.96);
@@ -28,9 +44,9 @@
   --color-node-carrera: #ec4899;
   --color-node-departamento: #14b8a6;
   --color-node-grupo: #f97316;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-mono: 'Space Mono', 'Courier New', monospace;
-  --font-wordmark: 'PicNic', 'Cormorant Garamond', serif;
+  --font-serif: 'Scorpius', Georgia, serif;
+  --font-mono: 'SpaceNotorious', 'Courier New', monospace;
+  --font-wordmark: 'PicNic', 'Scorpius', serif;
   --panel-width: 292px;
   --transition-panel: transform 0.35s cubic-bezier(0.22,1,0.36,1);
 }
