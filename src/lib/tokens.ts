@@ -9,6 +9,7 @@ let _fg  = ''
 let _acc = ''
 let _fontSerif = ''
 let _fontMono  = ''
+let _fontWordmark = ''
 
 export function refreshTokens() {
   const s = getComputedStyle(document.documentElement)
@@ -17,6 +18,7 @@ export function refreshTokens() {
   _acc      = s.getPropertyValue('--color-accent').trim()
   _fontSerif = s.getPropertyValue('--font-serif').trim()
   _fontMono  = s.getPropertyValue('--font-mono').trim()
+  _fontWordmark = s.getPropertyValue('--font-wordmark').trim()
 }
 
 export function bg()        { return _bg }
@@ -24,3 +26,4 @@ export function fg()        { return _fg }
 export function acc()       { return _acc }
 export function fontSerif() { return _fontSerif }
 export function fontMono()  { return _fontMono }
+export function fontWordmark() { return _fontWordmark }
