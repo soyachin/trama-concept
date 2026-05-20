@@ -32,21 +32,21 @@ export const TEXT = {
   nodeLabel: {
     family: fontSerif,
     weight: 400,
-    style: 'normal' as const,
+    style: 'italic' as const,
     size: 12,
   },
   // cabecera de área ("Especializada", "Arte y Cultura", etc.)
   areaHeader: {
     family: fontSerif,
-    weight: 600,
-    style: 'normal' as const,
+    weight: 400,
+    style: 'italic' as const,
     size: 14,
   },
   // nombre del quipu raíz ("comunidad UTEC")
   rootWordmark: {
     family: fontSerif,
     weight: 400,
-    style: 'normal' as const,
+    style: 'italic' as const,
     size: 30,
   },
   // cita de la intro ("Trama es el mapa de...")
