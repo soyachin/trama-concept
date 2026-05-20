@@ -3,9 +3,9 @@ import p5 from "p5";
 import * as d3 from "d3-force";
 import type { TNode, TEdge } from "../../types/graph";
 import { BAYER } from "../../config/visuals";
-import { bg, fg, acc, fontSerif, fontMono } from "../../lib/tokens";
+import { TEXT, composeFont, COLOR, composeRgba } from "../../config/typography";
 import { initLayout } from "../../lib/layout";
-import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport, rgb } from "../../lib/render";
+import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
 
 export interface SimulationState {
   time: number;
@@ -117,7 +117,7 @@ export function useGraphSimulation(
         const ctx = p.drawingContext as CanvasRenderingContext2D;
         const w = p.width, h = p.height;
 
-        ctx.fillStyle = bg();
+        ctx.fillStyle = composeRgba(COLOR.canvasBg);
         ctx.fillRect(0, 0, w, h);
 
         // Woven texture background (pre-rendered at buffer resolution)
@@ -204,30 +204,27 @@ export function useGraphSimulation(
         h: number,
       ) {
         if (s.intro === "showing") {
-          const [br, bgr, bb] = rgb(bg());
-          ctx.fillStyle = `rgba(${br},${bgr},${bb},0.92)`;
+          ctx.fillStyle = composeRgba(COLOR.introBg);
           ctx.fillRect(0, 0, w, h);
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillStyle = fg();
-          ctx.font = `italic 21px ${fontSerif()}`;
+          ctx.fillStyle = composeRgba(COLOR.introText);
+          ctx.font = composeFont(TEXT.introQuote);
           ctx.fillText(
             '"Trama es el mapa de lo que tu universidad ya sabe,',
             w / 2,
             h / 2 - 24,
           );
           ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
-          const [ifr, ifg, ifb] = rgb(fg());
-          ctx.font = `12px ${fontMono()}`;
-          ctx.fillStyle = `rgba(${ifr},${ifg},${ifb},0.48)`;
+          ctx.font = composeFont(TEXT.introSub);
+          ctx.fillStyle = composeRgba(COLOR.introSub);
           ctx.fillText(
             "Explora. Cada nodo es una puerta. Cada arista, una conversación pendiente.",
             w / 2,
             h / 2 + 50,
           );
-          const [iar, iag, iab] = rgb(acc());
-          ctx.font = `10px ${fontMono()}`;
-          ctx.fillStyle = `rgba(${iar},${iag},${iab},0.65)`;
+          ctx.font = composeFont(TEXT.introCta);
+          ctx.fillStyle = composeRgba(COLOR.introCta);
           ctx.fillText("[ click para comenzar ]", w / 2, h / 2 + 84);
         } else if (s.intro === "dissolving") {
           s.dissolve += 0.022;
@@ -236,8 +233,7 @@ export function useGraphSimulation(
             return;
           }
           const TILE = 7;
-          const [dr, dg, db] = rgb(bg());
-          ctx.fillStyle = `rgba(${dr},${dg},${db},0.95)`;
+          ctx.fillStyle = composeRgba(COLOR.dissolveBg);
           for (let tx = 0; tx < w; tx += TILE) {
             for (let ty = 0; ty < h; ty += TILE) {
               const bx = Math.floor(tx / TILE) % 4;
@@ -247,11 +243,10 @@ export function useGraphSimulation(
           }
           const ta = Math.max(0, 1 - s.dissolve * 5);
           if (ta > 0) {
-            const [dfr, dfg, dfb] = rgb(fg());
-            ctx.fillStyle = `rgba(${dfr},${dfg},${dfb},${ta})`;
+            ctx.fillStyle = composeRgba(COLOR.introText, ta);
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.font = `italic 21px ${fontSerif()}`;
+            ctx.font = composeFont(TEXT.introQuote);
             ctx.fillText(
               '"Trama es el mapa de lo que tu universidad ya sabe,',
               w / 2,

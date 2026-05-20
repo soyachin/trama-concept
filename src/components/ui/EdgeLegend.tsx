@@ -1,7 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { ROPE_CONFIGS } from '../../config/visuals'
-import { fg, fontMono } from '../../lib/tokens'
-import { rgb } from '../../lib/render'
+import { TEXT, composeFont, COLOR, composeRgba } from '../../config/typography'
 
 const LEGEND_ITEMS = [
   { pred: 'quipu',           label: 'quipu' },
@@ -29,8 +28,8 @@ export function RopeLegend() {
 
     ctx.clearRect(0, 0, 160, LEGEND_ITEMS.length * 18 + 8)
 
-    const [fr, fgr, fb] = rgb(fg())
-    ctx.font = `8px ${fontMono()}`
+    const legendCol = composeRgba(COLOR.legend)
+    ctx.font = composeFont(TEXT.legendLabel)
 
     LEGEND_ITEMS.forEach((item, i) => {
       const y = 12 + i * 18
@@ -43,12 +42,12 @@ export function RopeLegend() {
         ctx.beginPath()
         ctx.moveTo(8, y + off)
         ctx.lineTo(42, y + off)
-        ctx.strokeStyle = `rgba(${fr},${fgr},${fb},0.28)`
+        ctx.strokeStyle = legendCol
         ctx.lineWidth = 0.9
         ctx.stroke()
       }
 
-      ctx.fillStyle = `rgba(${fr},${fgr},${fb},0.28)`
+      ctx.fillStyle = legendCol
       ctx.fillText(item.label, 50, y + 3)
     })
   }, [])
