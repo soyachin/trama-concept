@@ -27,8 +27,7 @@ export function TramaGraph() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ nodes: 0, edges: 0 });
 
-  // Lista de quipus disponibles (top-bar). Si falla, deja la lista vacía
-  // y el QuipuSelector solo muestra los ghosts de "próximamente".
+  // Lista de quipus disponibles (top-bar). Si falla, deja la lista vacía.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -36,7 +35,7 @@ export function TramaGraph() {
         const data = await fetchQuipus();
         if (!cancelled) setQuipus(data);
       } catch {
-        // backend offline -> ghosts only
+        // backend offline -> selector vacío
       }
     })();
     return () => { cancelled = true; };
