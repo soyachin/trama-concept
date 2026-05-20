@@ -1,5 +1,5 @@
 import type { TNode, TEdge } from '../types/graph'
-import { TYPE_COLORS, ROPE_CONFIGS, BAYER } from '../config/visuals'
+import { getNodeColor, ROPE_CONFIGS, BAYER } from '../config/visuals'
 // fg/acc/bg are consumed via COLOR roles in typography.ts
 import { TEXT, composeFont, COLOR, composeRgba } from '../config/typography'
 
@@ -79,7 +79,12 @@ export function drawRope(
   const cfg = ROPE_CONFIGS[e.predicate] ?? ROPE_CONFIGS.dictadoPor
 
   const ropeRole = active ? COLOR.ropeActive : COLOR.ropeBase
-  const ropeRgb = rgb(ropeRole.base())
+  let ropeRgb: [number, number, number]
+  if (e.predicate === 'perteneceArea') {
+    ropeRgb = getNodeColor(src)
+  } else {
+    ropeRgb = rgb(ropeRole.base())
+  }
 
   const dx = tgt.x - src.x, dy = tgt.y - src.y
   const len = Math.hypot(dx, dy) || 1
@@ -179,8 +184,7 @@ export function drawKnot(
     return
   }
 
-  const typeColor = TYPE_COLORS[n.type] ?? '#6366f1'
-  const [cr, cg, cb] = rgb(typeColor)
+  const [cr, cg, cb] = getNodeColor(n)
 
   const baseR = n.type === 'AreaHeader' ? 15
     : n.type === 'OrganizacionEstudiantil' ? 13

@@ -44,6 +44,12 @@
   --color-node-carrera: #ec4899;
   --color-node-departamento: #14b8a6;
   --color-node-grupo: #f97316;
+
+  /* Áreas del quipu — oklch para manipulación perceptual */
+  --color-area-especializada: oklch(68% 0.18 264);
+  --color-area-arte-cultura: oklch(70.084% 0.18741 349.909);
+  --color-area-clubes-deportivos: oklch(75.306% 0.16857 135.648);
+  --color-area-default: oklch(76.015% 0.14325 175.095);
   --font-serif: 'EB Garamond', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
   --font-wordmark: 'PicNic', 'EB Garamond', serif;
