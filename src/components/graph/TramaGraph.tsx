@@ -162,18 +162,22 @@ export function TramaGraph() {
           <div className="trama-stats" style={{ visibility: panelNode === null ? 'visible' : 'hidden' }}>
             {stats.nodes} nudos · {stats.edges} cuerdas
           </div>
+
+          {/* Mobile search icon */}
+          <div className="trama-top-bar__search-mobile">
+            <SearchBar
+              value={searchVal}
+              onChange={setSearchVal}
+            />
+          </div>
         </div>
 
-        {/* Mobile Controls: Search + Selector */}
+        {/* Mobile Controls: Selector */}
         <div className="trama-mobile-controls">
           <QuipuSelector
             quipus={quipus}
             activeId={activeQuipuId}
             onSelect={setActiveQuipuId}
-          />
-          <SearchBar
-            value={searchVal}
-            onChange={setSearchVal}
           />
         </div>
 
