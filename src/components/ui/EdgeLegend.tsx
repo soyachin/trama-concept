@@ -68,8 +68,14 @@ export function RopeLegend() {
 
   useEffect(() => {
     drawLegendCanvas(desktopCanvasRef.current)
-    drawLegendCanvas(mobileCanvasRef.current)
   }, [])
+
+  // Redraw mobile canvas when popover opens
+  useEffect(() => {
+    if (open) {
+      drawLegendCanvas(mobileCanvasRef.current)
+    }
+  }, [open])
 
   return (
     <div style={{ position: 'relative' }}>
