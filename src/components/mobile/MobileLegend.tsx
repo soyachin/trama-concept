@@ -48,13 +48,11 @@ function drawLegendCanvas(canvas: HTMLCanvasElement | null) {
   })
 }
 
-export function RopeLegend() {
-  const desktopCanvasRef = useRef<HTMLCanvasElement>(null)
-  const mobileCanvasRef = useRef<HTMLCanvasElement>(null)
+export function MobileLegend() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
-  // Close popover when clicking outside
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -67,40 +65,27 @@ export function RopeLegend() {
   }, [open])
 
   useEffect(() => {
-    drawLegendCanvas(desktopCanvasRef.current)
-  }, [])
-
-  // Redraw mobile canvas when popover opens
-  useEffect(() => {
     if (open) {
-      drawLegendCanvas(mobileCanvasRef.current)
+      drawLegendCanvas(canvasRef.current)
     }
   }, [open])
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Desktop: show legend directly */}
-      <div className="trama-legend trama-legend--desktop">
-        <canvas ref={desktopCanvasRef} />
-      </div>
-
-      {/* Mobile: show help button with popover */}
-      <div className="trama-legend--mobile">
-        <button
-          onClick={() => setOpen(!open)}
-          className="trama-legend__btn"
-          aria-label="Mostrar leyenda de cuerdas"
-          aria-expanded={open}
-        >
-          ?
-        </button>
-        
-        {open && (
-          <div ref={popoverRef} className="trama-legend__popover">
-            <canvas ref={mobileCanvasRef} />
-          </div>
-        )}
-      </div>
+    <div className="mobile-legend">
+      <button
+        onClick={() => setOpen(!open)}
+        className="mobile-legend__btn"
+        aria-label="Mostrar leyenda de cuerdas"
+        aria-expanded={open}
+      >
+        ?
+      </button>
+      
+      {open && (
+        <div ref={popoverRef} className="mobile-legend__popover">
+          <canvas ref={canvasRef} />
+        </div>
+      )}
     </div>
   )
 }

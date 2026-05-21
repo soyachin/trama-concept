@@ -1,0 +1,391 @@
+/* ============================================
+   Mobile Layout - Clean, no media queries
+   ============================================ */
+
+.mobile-layout {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.mobile-layout__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.mobile-layout__wordmark {
+  font-family: var(--font-wordmark);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-fg);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.mobile-layout__search {
+  pointer-events: auto;
+  position: relative;
+}
+
+.mobile-layout__controls {
+  pointer-events: auto;
+  width: 100%;
+}
+
+.mobile-layout__bottom {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+/* Mobile Search */
+.mobile-search {
+  position: relative;
+}
+
+.mobile-search__icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--color-fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-ui);
+  transition: all 160ms ease;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-search__icon-btn:hover,
+.mobile-search__icon-btn:active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.mobile-search__form {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 2px 4px 2px 12px;
+  box-shadow: var(--shadow-panel);
+  animation: searchExpand 200ms ease;
+  white-space: nowrap;
+  z-index: 50;
+  max-width: calc(100vw - 120px);
+}
+
+@keyframes searchExpand {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1);
+  }
+}
+
+.mobile-search__input {
+  width: 160px;
+  font-size: 16px;
+  padding: 0;
+  background: transparent;
+  height: 28px;
+  line-height: 28px;
+  border: none;
+  outline: none;
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+}
+
+.mobile-search__close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-border-subtle);
+  color: var(--color-fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Mobile Legend */
+.mobile-legend {
+  position: relative;
+  pointer-events: auto;
+}
+
+.mobile-legend__btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-visible);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-ui);
+  transition: all 160ms ease;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-legend__btn:hover,
+.mobile-legend__btn:active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.mobile-legend__popover {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: var(--shadow-panel);
+  z-index: 30;
+  min-width: 180px;
+}
+
+/* Mobile Bottom Sheet */
+.mobile-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  background: var(--color-bg-panel);
+  border-top: 1px solid var(--color-border-visible);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 32px rgba(0,0,0,0.8);
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-sheet--open {
+  transform: translateY(55%);
+}
+
+.mobile-sheet--expanded {
+  transform: translateY(10%);
+}
+
+.mobile-sheet__handle {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-panel);
+  border-radius: 16px 16px 0 0;
+  z-index: 10;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.mobile-sheet__handle:active {
+  cursor: grabbing;
+}
+
+.mobile-sheet__handle-bar {
+  width: 36px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.mobile-sheet__close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-bg-panel) 80%, transparent);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg);
+  opacity: 0.3;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+}
+
+.mobile-sheet__content {
+  padding: 0 16px 32px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobile-sheet__kind {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.mobile-sheet__title {
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--color-fg);
+}
+
+.mobile-sheet__body {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-fg) 58%, transparent);
+}
+
+.mobile-sheet__section {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--color-accent);
+}
+
+.mobile-sheet__meta {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--color-fg) 32%, transparent);
+}
+
+.mobile-sheet__subtitle {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+  padding-left: 9px;
+  border-left: 1px solid var(--color-accent-border);
+}
+
+.mobile-sheet__tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 400;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--color-fg) 70%, transparent);
+  display: inline-block;
+}
+
+.mobile-sheet__tag--dim {
+  color: color-mix(in srgb, var(--color-fg) 45%, transparent);
+  padding: 2px 7px;
+}
+
+.mobile-sheet__value {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-sheet__value-label {
+  color: color-mix(in srgb, var(--color-fg) 30%, transparent);
+  min-width: 52px;
+}
+
+.mobile-sheet__value-text {
+  color: color-mix(in srgb, var(--color-fg) 58%, transparent);
+}
+
+.mobile-sheet__divider {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mobile-sheet__footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  color: var(--color-border);
+  word-break: break-all;
+}
+
+/* Quipu Selector in mobile controls */
+.mobile-layout__controls .trama-selector {
+  width: 100%;
+  gap: 2px;
+  padding: 3px 4px;
+  overflow-x: auto;
+}
+
+.mobile-layout__controls .trama-selector__btn {
+  font-size: 9px;
+  padding: 4px 10px;
+}

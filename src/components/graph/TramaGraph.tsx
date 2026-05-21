@@ -5,11 +5,17 @@ import { assignAreaColors } from "../../lib/tokens";
 import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
-import { InfoPanel } from "../ui/InfoPanel";
-import { SearchBar } from "../ui/SearchBar";
-import { RopeLegend } from "../ui/EdgeLegend";
 import { QuipuSelector } from "../ui/QuipuSelector";
-import "../ui/TramaUI.css";
+import { DesktopLayout } from "../desktop/DesktopLayout";
+import { DesktopSearch } from "../desktop/DesktopSearch";
+import { DesktopLegend } from "../desktop/DesktopLegend";
+import { DesktopInfoPanel } from "../desktop/DesktopInfoPanel";
+import { MobileLayout } from "../mobile/MobileLayout";
+import { MobileSearch } from "../mobile/MobileSearch";
+import { MobileLegend } from "../mobile/MobileLegend";
+import { MobileInfoPanel } from "../mobile/MobileInfoPanel";
+import "../desktop/DesktopLayout.css";
+import "../mobile/MobileLayout.css";
 
 const DEFAULT_QUIPU_ID = "social";
 
@@ -28,6 +34,18 @@ export function TramaGraph() {
   const [edges, setEdges] = useState<TEdge[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ nodes: 0, edges: 0 });
+  
+  // Platform detection - single source of truth
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  
+  useEffect(() => {
+    const m = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    m.addEventListener('change', handler);
+    return () => m.removeEventListener('change', handler);
+  }, []);
 
   // Lista de quipus disponibles (top-bar). Si falla, deja la lista vacía.
   useEffect(() => {
@@ -122,7 +140,7 @@ export function TramaGraph() {
 
   if (loading) {
     return (
-      <div className="trama-loading" style={{
+      <div style={{
         position: "fixed",
         inset: 0,
         background: UI_COLOR.bg,
@@ -137,72 +155,61 @@ export function TramaGraph() {
     );
   }
 
+  const selector = (
+    <QuipuSelector
+      quipus={quipus}
+      activeId={activeQuipuId}
+      onSelect={setActiveQuipuId}
+    />
+  );
+
+  const infoPanel = (
+    <DesktopInfoPanel
+      node={panelNode}
+      onClose={() => setPanelNode(null)}
+      getConns={getConns}
+    />
+  );
+
+  const mobileInfoPanel = (
+    <MobileInfoPanel
+      node={panelNode}
+      onClose={() => setPanelNode(null)}
+      getConns={getConns}
+    />
+  );
+
   return (
     <div className="trama-root">
-      {/* Canvas Layer */}
       <div
         ref={containerRef}
         className="trama-canvas-layer"
       />
 
-      {/* UI Overlay */}
-      <div className="trama-ui-layer">
-        {/* Top Bar */}
-        <div className="trama-top-bar">
-          <div className="trama-top-bar__left">
-            <div className="trama-wordmark">trama</div>
-            <div className="trama-top-bar__search-mobile">
-              <SearchBar
-                value={searchVal}
-                onChange={setSearchVal}
-              />
-            </div>
-          </div>
-          
-          <div className="trama-top-bar__center">
-            <QuipuSelector
-              quipus={quipus}
-              activeId={activeQuipuId}
-              onSelect={setActiveQuipuId}
-            />
-          </div>
-
-          <div className="trama-stats" style={{ visibility: panelNode === null ? 'visible' : 'hidden' }}>
-            {stats.nodes} nudos · {stats.edges} cuerdas
-          </div>
-        </div>
-
-        {/* Mobile Controls: Selector */}
-        <div className="trama-mobile-controls">
-          <QuipuSelector
-            quipus={quipus}
-            activeId={activeQuipuId}
-            onSelect={setActiveQuipuId}
-          />
-        </div>
-
-        {/* Middle Area: Info Panel */}
-        <div className="trama-middle-area">
-          <InfoPanel
-            node={panelNode}
-            onClose={() => setPanelNode(null)}
-            getConns={getConns}
-          />
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="trama-bottom-bar">
-          <RopeLegend />
-          <div className="trama-bottom-bar__center trama-bottom-bar__center--desktop">
-            <SearchBar
-              value={searchVal}
-              onChange={setSearchVal}
-            />
-          </div>
-          {/* Spacer para balancear flex */}
-          <div style={{ width: 160, pointerEvents: 'none' }} />
-        </div>
-      </div>
+      {isMobile ? (
+        <MobileLayout
+          wordmark={<div className="mobile-layout__wordmark">trama</div>}
+          search={<MobileSearch value={searchVal} onChange={setSearchVal} />}
+          selector={selector}
+          infoPanel={mobileInfoPanel}
+          legend={<MobileLegend />}
+        />
+      ) : (
+        <DesktopLayout
+          wordmark={<div className="desktop-layout__wordmark">trama</div>}
+          selector={selector}
+          stats={
+            panelNode === null ? (
+              <div className="desktop-layout__stats">
+                {stats.nodes} nudos · {stats.edges} cuerdas
+              </div>
+            ) : null
+          }
+          infoPanel={infoPanel}
+          legend={<DesktopLegend />}
+          search={<DesktopSearch value={searchVal} onChange={setSearchVal} />}
+        />
+      )}
     </div>
   );
 }
