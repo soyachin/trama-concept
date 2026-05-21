@@ -1,0 +1,496 @@
+/* ============================================
+   Trama UI System - CSS Modules Replacement
+   ============================================ */
+
+/* ─── Layout Principal ─── */
+.trama-root {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.trama-canvas-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.trama-ui-layer {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px;
+  gap: 16px;
+  pointer-events: none;
+}
+
+/* ─── Top Bar ─── */
+.trama-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Wrapper para mantener el selector centrado */
+.trama-top-bar__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.trama-wordmark {
+  font-family: var(--font-wordmark);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-fg);
+  opacity: 0.9;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.trama-stats {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--color-fg) 38%, transparent);
+  text-align: right;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ─── Middle Area (Panel) ─── */
+.trama-middle-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  min-height: 0;
+}
+
+/* ─── Bottom Bar ─── */
+.trama-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.trama-bottom-bar__center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 26px;
+  pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+  .trama-bottom-bar__center {
+    bottom: 16px;
+  }
+}
+
+/* ─── Info Panel ─── */
+.trama-info-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--panel-width);
+  background: var(--color-bg-panel);
+  border-left: 1px solid var(--color-border-visible);
+  box-shadow: var(--shadow-panel);
+  padding: 26px 20px;
+  color: var(--color-fg);
+  overflow-y: auto;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transform: translateX(100%);
+  transition: var(--transition-panel);
+  pointer-events: auto;
+  visibility: hidden;
+}
+
+.trama-info-panel--open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.trama-info-panel__close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--color-fg);
+  opacity: 0.3;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px;
+  transition: opacity 160ms ease;
+}
+
+.trama-info-panel__close:hover {
+  opacity: 0.8;
+}
+
+.trama-info-panel__kind {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.trama-info-panel__title {
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--color-fg);
+}
+
+.trama-info-panel__body {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-fg) 58%, transparent);
+}
+
+.trama-info-panel__section {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--color-accent);
+}
+
+.trama-info-panel__meta {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--color-fg) 32%, transparent);
+}
+
+.trama-info-panel__subtitle {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+  padding-left: 9px;
+  border-left: 1px solid var(--color-accent-border);
+}
+
+.trama-info-panel__tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 400;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--color-fg) 70%, transparent);
+  display: inline-block;
+}
+
+.trama-info-panel__tag--dim {
+  color: color-mix(in srgb, var(--color-fg) 45%, transparent);
+  padding: 2px 7px;
+}
+
+.trama-info-panel__value {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  display: flex;
+  gap: 8px;
+}
+
+.trama-info-panel__value-label {
+  color: color-mix(in srgb, var(--color-fg) 30%, transparent);
+  min-width: 52px;
+}
+
+.trama-info-panel__value-text {
+  color: color-mix(in srgb, var(--color-fg) 58%, transparent);
+}
+
+.trama-info-panel__divider {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.trama-info-panel__footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  color: var(--color-border);
+  word-break: break-all;
+}
+
+/* ─── Search Bar ─── */
+.trama-search {
+  pointer-events: auto;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-visible);
+  border-radius: 4px;
+  box-shadow: var(--shadow-ui);
+}
+
+.trama-search__input {
+  background: transparent;
+  border: none;
+  color: var(--color-fg);
+  padding: 9px 18px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  outline: none;
+  width: 252px;
+}
+
+.trama-search__input::placeholder {
+  color: color-mix(in srgb, var(--color-fg) 30%, transparent);
+}
+
+/* ─── Rope Legend ─── */
+.trama-legend {
+  pointer-events: auto;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-visible);
+  border-radius: 4px;
+  padding: 6px 8px;
+  box-shadow: var(--shadow-ui);
+}
+
+.trama-legend--desktop {
+  display: block;
+}
+
+.trama-legend--mobile {
+  display: none;
+}
+
+.trama-legend__btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-visible);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-ui);
+  transition: all 160ms ease;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.trama-legend__btn:hover,
+.trama-legend__btn:active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.trama-legend__popover {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-visible);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow-panel);
+  z-index: 30;
+  min-width: 180px;
+}
+
+.trama-legend__popover-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: 8px;
+}
+
+@media (max-width: 767px) {
+  .trama-legend--desktop {
+    display: none;
+  }
+
+  .trama-legend--mobile {
+    display: block;
+  }
+}
+
+/* ─── Quipu Selector ─── */
+.trama-selector {
+  pointer-events: auto;
+  display: flex;
+  gap: 4px;
+  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 4px 6px;
+}
+
+.trama-selector__btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+
+.trama-selector__btn--active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent);
+}
+
+.trama-selector__btn--available {
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+}
+
+.trama-selector__btn--disabled {
+  color: color-mix(in srgb, var(--color-fg) 22%, transparent);
+  cursor: default;
+}
+
+/* ============================================
+   RESPONSIVE - Mobile (< 768px)
+   ============================================ */
+
+@media (max-width: 767px) {
+  .trama-ui-layer {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .trama-top-bar {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .trama-wordmark {
+    font-size: 24px;
+  }
+
+  .trama-stats {
+    display: none;
+  }
+
+  .trama-selector {
+    order: 3;
+    flex: 1 1 100%;
+    gap: 2px;
+    padding: 3px 4px;
+    overflow-x: auto;
+  }
+
+  .trama-selector__btn {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+
+  .trama-info-panel {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    border-left: none;
+    box-shadow: none;
+    padding: 20px 16px;
+    z-index: 100;
+  }
+
+  .trama-search__input {
+    width: 200px;
+    padding: 8px 14px;
+  }
+
+  .trama-legend {
+    padding: 4px 6px;
+  }
+
+  .trama-bottom-bar {
+    gap: 8px;
+  }
+}
+
+/* ============================================
+   Tablet (768px - 1023px)
+   ============================================ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .trama-wordmark {
+    font-size: 28px;
+  }
+
+  .trama-info-panel {
+    width: 260px;
+    padding: 22px 18px;
+  }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .trama-info-panel {
+    transition: none;
+  }
+
+  .trama-selector__btn {
+    transition: none;
+  }
+}
