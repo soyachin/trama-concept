@@ -7,6 +7,7 @@ const DRAG_ALPHA = 0.35;
 const MIN_ZOOM = 0.22;
 const MAX_ZOOM = 3.8;
 const DRAG_THRESHOLD = 5;
+const TOUCH_TAP_THRESHOLD = 25; // Distancia máxima para considerar un tap
 const FLY_TO_DURATION = 400;
 const FLY_TO_ZOOM = 1.4;
 
@@ -305,6 +306,8 @@ export function useGraphInteraction(
           n.fy = n.y;
           touchIsPan = false;
           s.simulation?.alphaTarget(DRAG_ALPHA).restart();
+          // Prevenir scroll del navegador cuando tocamos un nodo
+          e.preventDefault();
         } else {
           touchDragNode = null;
           touchIsPan = true;
@@ -342,23 +345,22 @@ export function useGraphInteraction(
         const deltaX = e.touches[0].clientX - lastTouchX;
         const deltaY = e.touches[0].clientY - lastTouchY;
 
-        if (!touchMoved) {
-          const totalDx = mx - touchStartX;
-          const totalDy = my - touchStartY;
-          if (Math.hypot(totalDx, totalDy) > DRAG_THRESHOLD) {
-            touchMoved = true;
-          }
+        // Calcular distancia total desde el inicio
+        const totalDx = mx - touchStartX;
+        const totalDy = my - touchStartY;
+        const totalDist = Math.hypot(totalDx, totalDy);
+
+        if (!touchMoved && totalDist > TOUCH_TAP_THRESHOLD) {
+          touchMoved = true;
         }
 
         if (touchMoved) {
           if (touchDragNode) {
             e.preventDefault();
-            touchDragNode.fx! += (mx - touchStartX) / s.zoom * 0.5;
-            touchDragNode.fy! += (my - touchStartY) / s.zoom * 0.5;
+            touchDragNode.fx! += deltaX / s.zoom;
+            touchDragNode.fy! += deltaY / s.zoom;
             touchDragNode.x = touchDragNode.fx!;
             touchDragNode.y = touchDragNode.fy!;
-            touchStartX = mx;
-            touchStartY = my;
           } else if (touchIsPan) {
             e.preventDefault();
             s.panX += deltaX;
@@ -375,13 +377,24 @@ export function useGraphInteraction(
     const onTouchEnd = (e: TouchEvent) => {
       if (s.intro !== "done") return;
 
+      // Calcular distancia total del movimiento para determinar si fue un tap
+      let totalDist = 0;
+      if (e.changedTouches.length > 0) {
+        const t = e.changedTouches[0];
+        const [mx, my] = touchCoords(t);
+        totalDist = Math.hypot(mx - touchStartX, my - touchStartY);
+      }
+
+      // Es un tap si no se movió significativamente
+      const isTap = !touchMoved || totalDist < TOUCH_TAP_THRESHOLD;
+
       if (touchDragNode) {
         touchDragNode.fx = null;
         touchDragNode.fy = null;
         s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
       }
 
-      if (e.changedTouches.length === 1 && e.touches.length === 0 && !touchMoved) {
+      if (e.changedTouches.length === 1 && e.touches.length === 0 && isTap) {
         const t = e.changedTouches[0];
         const [mx, my] = touchCoords(t);
         const cv = getCanvas();
@@ -414,7 +427,7 @@ export function useGraphInteraction(
     el.addEventListener("mousemove", onDrag);
     el.addEventListener("dblclick", onDblClick);
     el.addEventListener("wheel", onWheel, { passive: false });
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
 
