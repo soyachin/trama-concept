@@ -203,29 +203,58 @@ export function useGraphSimulation(
         w: number,
         h: number,
       ) {
+        const isMobile = w < 768;
+        const quoteSize = isMobile ? Math.max(16, TEXT.introQuote.size * 0.7) : TEXT.introQuote.size;
+        const subSize = isMobile ? Math.max(11, TEXT.introSub.size * 0.8) : TEXT.introSub.size;
+        const ctaSize = isMobile ? Math.max(10, TEXT.introCta.size * 0.85) : TEXT.introCta.size;
+        
         if (s.intro === "showing") {
           ctx.fillStyle = composeRgba(COLOR.introBg);
           ctx.fillRect(0, 0, w, h);
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillStyle = composeRgba(COLOR.introText);
-          ctx.font = composeFont(TEXT.introQuote);
-          ctx.fillText(
-            '"Trama es el mapa de lo que tu universidad ya sabe,',
-            w / 2,
-            h / 2 - 24,
-          );
-          ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
-          ctx.font = composeFont(TEXT.introSub);
+          ctx.font = composeFont(TEXT.introQuote, quoteSize);
+          
+          if (isMobile) {
+            // Mobile: split quote into 3 lines
+            ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40);
+            ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16);
+            ctx.fillText('ya sabe, pero nunca te dijo."', w / 2, h / 2 + 8);
+          } else {
+            ctx.fillText(
+              '"Trama es el mapa de lo que tu universidad ya sabe,',
+              w / 2,
+              h / 2 - 24,
+            );
+            ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
+          }
+          
+          ctx.font = composeFont(TEXT.introSub, subSize);
           ctx.fillStyle = composeRgba(COLOR.introSub);
-          ctx.fillText(
-            "Explora. Cada nodo es una puerta. Cada arista, una conversación pendiente.",
-            w / 2,
-            h / 2 + 50,
-          );
-          ctx.font = composeFont(TEXT.introCta);
+          
+          if (isMobile) {
+            ctx.fillText(
+              "Explora. Cada nodo es una puerta.",
+              w / 2,
+              h / 2 + 44,
+            );
+            ctx.fillText(
+              "Cada arista, una conversación pendiente.",
+              w / 2,
+              h / 2 + 64,
+            );
+          } else {
+            ctx.fillText(
+              "Explora. Cada nodo es una puerta. Cada arista, una conversación pendiente.",
+              w / 2,
+              h / 2 + 50,
+            );
+          }
+          
+          ctx.font = composeFont(TEXT.introCta, ctaSize);
           ctx.fillStyle = composeRgba(COLOR.introCta);
-          ctx.fillText("[ click para comenzar ]", w / 2, h / 2 + 84);
+          ctx.fillText("[ toca para comenzar ]", w / 2, h / 2 + (isMobile ? 100 : 84));
         } else if (s.intro === "dissolving") {
           s.dissolve += 0.022;
           if (s.dissolve >= 1) {
@@ -246,13 +275,20 @@ export function useGraphSimulation(
             ctx.fillStyle = composeRgba(COLOR.introText, ta);
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.font = composeFont(TEXT.introQuote);
-            ctx.fillText(
-              '"Trama es el mapa de lo que tu universidad ya sabe,',
-              w / 2,
-              h / 2 - 24,
-            );
-            ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
+            ctx.font = composeFont(TEXT.introQuote, quoteSize);
+            
+            if (isMobile) {
+              ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40);
+              ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16);
+              ctx.fillText('ya sabe, pero nunca te dijo."', w / 2, h / 2 + 8);
+            } else {
+              ctx.fillText(
+                '"Trama es el mapa de lo que tu universidad ya sabe,',
+                w / 2,
+                h / 2 - 24,
+              );
+              ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
+            }
           }
         }
       }

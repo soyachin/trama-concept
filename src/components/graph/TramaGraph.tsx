@@ -14,6 +14,7 @@ import { MobileLayout } from "../mobile/MobileLayout";
 import { MobileSearch } from "../mobile/MobileSearch";
 import { MobileLegend } from "../mobile/MobileLegend";
 import { MobileInfoPanel } from "../mobile/MobileInfoPanel";
+import { MobileQuipuMenu } from "../mobile/MobileQuipuMenu";
 import "../desktop/DesktopLayout.css";
 import "../mobile/MobileLayout.css";
 
@@ -190,7 +191,13 @@ export function TramaGraph() {
         <MobileLayout
           wordmark={<div className="mobile-layout__wordmark">trama</div>}
           search={<MobileSearch value={searchVal} onChange={setSearchVal} />}
-          selector={selector}
+          quipuMenu={
+            <MobileQuipuMenu
+              quipus={quipus}
+              activeId={activeQuipuId}
+              onSelect={setActiveQuipuId}
+            />
+          }
           infoPanel={mobileInfoPanel}
           legend={<MobileLegend />}
         />

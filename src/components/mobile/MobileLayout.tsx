@@ -3,12 +3,12 @@ import type { ReactNode } from 'react'
 interface MobileLayoutProps {
   wordmark: ReactNode
   search: ReactNode
-  selector: ReactNode
+  quipuMenu: ReactNode
   infoPanel: ReactNode
   legend: ReactNode
 }
 
-export function MobileLayout({ wordmark, search, selector, infoPanel, legend }: MobileLayoutProps) {
+export function MobileLayout({ wordmark, search, quipuMenu, infoPanel, legend }: MobileLayoutProps) {
   return (
     <div className="mobile-layout">
       {/* Canvas is rendered separately in parent */}
@@ -18,14 +18,11 @@ export function MobileLayout({ wordmark, search, selector, infoPanel, legend }: 
         <div className="mobile-layout__search">{search}</div>
       </header>
 
-      <div className="mobile-layout__controls">
-        {selector}
-      </div>
-
       {infoPanel}
 
       <footer className="mobile-layout__bottom">
         {legend}
+        <div className="mobile-layout__quipu">{quipuMenu}</div>
       </footer>
     </div>
   )
