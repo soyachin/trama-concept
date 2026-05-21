@@ -149,7 +149,15 @@ export function TramaGraph() {
       <div className="trama-ui-layer">
         {/* Top Bar */}
         <div className="trama-top-bar">
-          <div className="trama-wordmark">trama</div>
+          <div className="trama-top-bar__left">
+            <div className="trama-wordmark">trama</div>
+            <div className="trama-top-bar__search-mobile">
+              <SearchBar
+                value={searchVal}
+                onChange={setSearchVal}
+              />
+            </div>
+          </div>
           
           <div className="trama-top-bar__center">
             <QuipuSelector
@@ -161,14 +169,6 @@ export function TramaGraph() {
 
           <div className="trama-stats" style={{ visibility: panelNode === null ? 'visible' : 'hidden' }}>
             {stats.nodes} nudos · {stats.edges} cuerdas
-          </div>
-
-          {/* Mobile search icon */}
-          <div className="trama-top-bar__search-mobile">
-            <SearchBar
-              value={searchVal}
-              onChange={setSearchVal}
-            />
           </div>
         </div>
 
