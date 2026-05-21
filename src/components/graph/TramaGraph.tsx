@@ -164,6 +164,19 @@ export function TramaGraph() {
           </div>
         </div>
 
+        {/* Mobile Controls: Search + Selector */}
+        <div className="trama-mobile-controls">
+          <QuipuSelector
+            quipus={quipus}
+            activeId={activeQuipuId}
+            onSelect={setActiveQuipuId}
+          />
+          <SearchBar
+            value={searchVal}
+            onChange={setSearchVal}
+          />
+        </div>
+
         {/* Middle Area: Info Panel */}
         <div className="trama-middle-area">
           <InfoPanel
@@ -176,7 +189,7 @@ export function TramaGraph() {
         {/* Bottom Bar */}
         <div className="trama-bottom-bar">
           <RopeLegend />
-          <div className="trama-bottom-bar__center">
+          <div className="trama-bottom-bar__center trama-bottom-bar__center--desktop">
             <SearchBar
               value={searchVal}
               onChange={setSearchVal}
