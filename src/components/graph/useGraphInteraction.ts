@@ -50,13 +50,18 @@ function flyTo(
   targetNode: TNode,
   canvasW: number,
   canvasH: number,
+  isMobile = false,
 ) {
   const startPanX = s.panX;
   const startPanY = s.panY;
   const startZoom = s.zoom;
 
+  // En móvil con bottom sheet, centrar el nodo en el área visible superior
+  // (aprox 30% desde arriba) para que no quede tapado por el panel
+  const visibleCenterY = isMobile ? canvasH * 0.3 : canvasH / 2;
+
   const endPanX = -(targetNode.x - canvasW / 2) * FLY_TO_ZOOM;
-  const endPanY = -(targetNode.y - canvasH / 2) * FLY_TO_ZOOM;
+  const endPanY = -(targetNode.y - visibleCenterY) * FLY_TO_ZOOM;
   const endZoom = FLY_TO_ZOOM;
 
   const startTime = performance.now();
@@ -410,7 +415,7 @@ export function useGraphInteraction(
           } else {
             s.selId = n.id;
             setPanelNode(n);
-            if (cv) flyTo(s, n, cv.clientWidth, cv.clientHeight);
+            if (cv) flyTo(s, n, cv.clientWidth, cv.clientHeight, true);
           }
         } else {
           s.selId = null;
