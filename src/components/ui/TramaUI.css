@@ -111,7 +111,7 @@
 
 /* ─── Info Panel ─── */
 .trama-info-panel {
-  position: absolute;
+  position: fixed;
   right: 0;
   top: 0;
   bottom: 0;
@@ -433,14 +433,41 @@
     padding: 4px 10px;
   }
 
+  /* Bottom Sheet para móvil */
   .trama-info-panel {
     position: fixed;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
     width: 100%;
+    max-height: 85vh;
+    min-height: 200px;
     border-left: none;
-    box-shadow: none;
-    padding: 20px 16px;
+    border-top: 1px solid var(--color-border-visible);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.8);
+    padding: 20px 16px 32px;
     z-index: 100;
+    transform: translateY(100%);
+  }
+
+  .trama-info-panel--open {
+    transform: translateY(0);
+  }
+
+  /* Handle de arrastre para cerrar */
+  .trama-info-panel::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    opacity: 0.5;
   }
 
   .trama-search__input {

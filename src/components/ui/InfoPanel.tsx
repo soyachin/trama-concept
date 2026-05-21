@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import type { TNode, NodeMetaValue, RelatedRef } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
@@ -56,6 +56,7 @@ interface InfoPanelProps {
 }
 
 export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
   const conns = useMemo(() => (node ? getConns(node.id) : []), [node, getConns])
   const byPred = useMemo(() =>
     conns.reduce<Record<string, typeof conns>>((acc, c) => {
@@ -65,8 +66,62 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
     [conns]
   )
 
+  // Swipe down to close on mobile
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel || !node) return
+
+    let startY = 0
+    let currentY = 0
+    const isMobile = window.innerWidth < 768
+    if (!isMobile) return
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        startY = e.touches[0].clientY
+        currentY = startY
+      }
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        currentY = e.touches[0].clientY
+        const deltaY = currentY - startY
+        if (deltaY > 0) {
+          panel.style.transform = `translateY(${deltaY}px)`
+          panel.style.transition = 'none'
+        }
+      }
+    }
+
+    const onTouchEnd = () => {
+      const deltaY = currentY - startY
+      if (deltaY > 80) {
+        onClose()
+      } else {
+        panel.style.transform = ''
+        panel.style.transition = ''
+      }
+      startY = 0
+      currentY = 0
+    }
+
+    panel.addEventListener('touchstart', onTouchStart, { passive: true })
+    panel.addEventListener('touchmove', onTouchMove, { passive: true })
+    panel.addEventListener('touchend', onTouchEnd)
+
+    return () => {
+      panel.removeEventListener('touchstart', onTouchStart)
+      panel.removeEventListener('touchmove', onTouchMove)
+      panel.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [node, onClose])
+
   return (
-    <div className={`trama-info-panel ${node ? 'trama-info-panel--open' : ''}`}>
+    <div 
+      ref={panelRef}
+      className={`trama-info-panel ${node ? 'trama-info-panel--open' : ''}`}
+    >
       {node && (<>
         <button
           onClick={onClose}
