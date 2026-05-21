@@ -1,15 +1,15 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
-import { UI_TEXT, UI_COLOR, toReactStyle } from "../../config/typography";
+import { UI_COLOR, toReactStyle } from "../../config/typography";
 import { assignAreaColors } from "../../lib/tokens";
 import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
-import { OverlayLayer } from "../overlay/OverlayLayer";
 import { InfoPanel } from "../ui/InfoPanel";
 import { SearchBar } from "../ui/SearchBar";
 import { RopeLegend } from "../ui/EdgeLegend";
 import { QuipuSelector } from "../ui/QuipuSelector";
+import "../ui/TramaUI.css";
 
 const DEFAULT_QUIPU_ID = "social";
 
@@ -122,14 +122,14 @@ export function TramaGraph() {
 
   if (loading) {
     return (
-      <div style={{
+      <div className="trama-loading" style={{
         position: "fixed",
         inset: 0,
         background: UI_COLOR.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        ...toReactStyle(UI_TEXT.loading),
+        ...toReactStyle({ family: () => "'EB Garamond', Georgia, serif", size: 21, weight: 400, style: 'italic' }),
         color: UI_COLOR.fg,
       }}>
         cargando trama…
@@ -138,83 +138,54 @@ export function TramaGraph() {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "var(--color-bg)",
-        overflow: "hidden",
-      }}
-    >
+    <div className="trama-root">
+      {/* Canvas Layer */}
       <div
         ref={containerRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 0,
-        }}
+        className="trama-canvas-layer"
       />
 
-      <OverlayLayer>
-        <div style={{ pointerEvents: "auto" }}>
+      {/* UI Overlay */}
+      <div className="trama-ui-layer">
+        {/* Top Bar */}
+        <div className="trama-top-bar">
+          <div className="trama-wordmark">trama</div>
+          
+          <div className="trama-top-bar__center">
+            <QuipuSelector
+              quipus={quipus}
+              activeId={activeQuipuId}
+              onSelect={setActiveQuipuId}
+            />
+          </div>
+
+          <div className="trama-stats" style={{ visibility: panelNode === null ? 'visible' : 'hidden' }}>
+            {stats.nodes} nudos · {stats.edges} cuerdas
+          </div>
+        </div>
+
+        {/* Middle Area: Info Panel */}
+        <div className="trama-middle-area">
           <InfoPanel
             node={panelNode}
             onClose={() => setPanelNode(null)}
             getConns={getConns}
           />
         </div>
-        <div style={{ pointerEvents: "auto" }}>
-          <SearchBar
-            value={searchVal}
-            onChange={setSearchVal}
-            offset={panelNode !== null}
-          />
-        </div>
-        <div style={{ pointerEvents: "auto" }}>
+
+        {/* Bottom Bar */}
+        <div className="trama-bottom-bar">
           <RopeLegend />
+          <div className="trama-bottom-bar__center">
+            <SearchBar
+              value={searchVal}
+              onChange={setSearchVal}
+            />
+          </div>
+          {/* Spacer para balancear flex */}
+          <div style={{ width: 160, pointerEvents: 'none' }} />
         </div>
-        <QuipuSelector
-          quipus={quipus}
-          activeId={activeQuipuId}
-          onSelect={setActiveQuipuId}
-        />
-      </OverlayLayer>
-
-      {/* Wordmark */}
-      <div
-        style={{
-          position: "absolute",
-          top: 18,
-          left: 22,
-          zIndex: 20,
-          ...toReactStyle(UI_TEXT.wordmark),
-          color: UI_COLOR.fg,
-          opacity: 0.9,
-          pointerEvents: "none",
-        }}
-      >
-        trama
       </div>
-
-      {/* Stats */}
-      {panelNode === null && (
-        <div
-          style={{
-            position: "absolute",
-            top: 18,
-            right: 18,
-            zIndex: 20,
-            ...toReactStyle(UI_TEXT.stats),
-            color: UI_COLOR.fgBarely,
-            textAlign: "right",
-            pointerEvents: "none",
-          }}
-        >
-          {stats.nodes} nudos · {stats.edges} cuerdas
-        </div>
-      )}
     </div>
   );
 }
