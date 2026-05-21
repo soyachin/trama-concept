@@ -1,5 +1,4 @@
 import type { QuipuSummary } from '../../types/graph'
-import { UI_TEXT, UI_COLOR, toReactStyle } from '../../config/typography'
 
 interface QuipuSelectorProps {
   quipus: QuipuSummary[]
@@ -10,21 +9,7 @@ interface QuipuSelectorProps {
 export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps) {
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: 16,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 25,
-      display: 'flex',
-      gap: 4,
-      background: 'color-mix(in srgb, var(--color-bg) 62%, transparent)',
-      backdropFilter: 'blur(6px)',
-      border: `1px solid ${UI_COLOR.borderSubtle}`,
-      borderRadius: 999,
-      padding: '4px 6px',
-      pointerEvents: 'auto',
-    }}>
+    <div className="trama-selector">
       {quipus.map(q => {
         const isActive = q.id === activeId
         const isAvailable = q.status === 'active'
@@ -34,20 +19,11 @@ export function QuipuSelector({ quipus, activeId, onSelect }: QuipuSelectorProps
             disabled={!isAvailable}
             onClick={() => isAvailable && onSelect(q.id)}
             title={q.description + (isAvailable ? '' : ' · próximamente')}
-            style={{
-              ...toReactStyle(UI_TEXT.navLabel),
-              padding: '6px 14px',
-              borderRadius: 999,
-              border: '1px solid transparent',
-              background: isActive ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent',
-              color: isActive
-                ? UI_COLOR.accent
-                : isAvailable
-                  ? UI_COLOR.fgBright
-                  : UI_COLOR.fgFaint,
-              cursor: isAvailable ? 'pointer' : 'default',
-              transition: 'all 160ms ease',
-            }}
+            className={`trama-selector__btn ${
+              isActive ? 'trama-selector__btn--active' : 
+              isAvailable ? 'trama-selector__btn--available' : 
+              'trama-selector__btn--disabled'
+            }`}
           >
             {q.label}
           </button>

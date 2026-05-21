@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import type { TNode, NodeMetaValue, RelatedRef } from '../../types/graph'
-import { UI_TEXT, UI_COLOR, toReactStyle } from '../../config/typography'
 
 const PRED_LABELS: Record<string, string> = {
   alianzaCon: 'alianza con',
@@ -34,8 +33,6 @@ const TYPE_LABELS: Record<string, string> = {
   'GrupoInvestigacion': 'Grupo de Investigación',
 }
 
-// Predicados cuyo objeto vive en hidden_types del quipu (carrera, docente,
-// curso). Se renderizan en el panel como chips o lista enlazada.
 const META_RELATION_LABELS: Record<string, string> = {
   perteneceA: 'carreras afines',
   asesoradoPor: 'asesores docentes',
@@ -69,73 +66,30 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
   )
 
   return (
-    <div style={{
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      bottom: 0,
-      width: 'var(--panel-width)',
-      background: UI_COLOR.bgPanel,
-      borderLeft: `1px solid ${UI_COLOR.borderVisible}`,
-      boxShadow: 'var(--shadow-panel)',
-      padding: '26px 20px',
-      color: UI_COLOR.fg,
-      overflowY: 'auto',
-      zIndex: 20,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 14,
-      transform: node ? 'translateX(0)' : 'translateX(100%)',
-      transition: 'var(--transition-panel)',
-    }}>
+    <div className={`trama-info-panel ${node ? 'trama-info-panel--open' : ''}`}>
       {node && (<>
         <button
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 14,
-            background: 'none',
-            border: 'none',
-            color: UI_COLOR.fgVerySubtle,
-            cursor: 'pointer',
-            fontSize: 20,
-            lineHeight: 1,
-            padding: 4,
-          }}
+          className="trama-info-panel__close"
+          aria-label="Cerrar panel"
         >×</button>
 
-        <div style={{
-          ...toReactStyle(UI_TEXT.panelKind),
-          color: UI_COLOR.accent,
-        }}>
+        <div className="trama-info-panel__kind">
           {TYPE_LABELS[node.type] ?? node.type}
         </div>
 
-        <div style={{
-          ...toReactStyle(UI_TEXT.panelTitle),
-          color: UI_COLOR.fg,
-        }}>
+        <div className="trama-info-panel__title">
           {node.label}
         </div>
 
         {node.description && (
-          <div style={{
-            ...toReactStyle(UI_TEXT.panelBody),
-            color: UI_COLOR.fgMuted,
-          }}>
+          <div className="trama-info-panel__body">
             {node.description}
           </div>
         )}
 
         {hasLiteralMeta(node) && (
-          <div style={{
-            borderTop: `1px solid ${UI_COLOR.borderSubtle}`,
-            paddingTop: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 5,
-          }}>
+          <div className="trama-info-panel__divider">
             {Object.entries(META_LITERAL_LABELS).map(([k, label]) => {
               const v = node.metadata?.[k]
               if (typeof v !== 'string' || !v) return null
@@ -147,33 +101,18 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
         )}
 
         {hasRelationMeta(node) && (
-          <div style={{
-            borderTop: `1px solid ${UI_COLOR.borderSubtle}`,
-            paddingTop: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}>
+          <div className="trama-info-panel__divider" style={{ gap: 10 }}>
             {Object.entries(META_RELATION_LABELS).map(([pred, label]) => {
               const refs = node.metadata?.[pred]
               if (!refs || !isRelatedList(refs)) return null
               return (
                 <div key={pred} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{
-                    ...toReactStyle(UI_TEXT.panelMeta),
-                    color: UI_COLOR.fgSubtle,
-                  }}>
+                  <div className="trama-info-panel__meta">
                     {label}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {refs.map(r => (
-                      <span key={r.slug} style={{
-                        ...toReactStyle(UI_TEXT.panelTag),
-                        padding: '3px 8px',
-                        border: `1px solid ${UI_COLOR.border}`,
-                        borderRadius: 999,
-                        color: UI_COLOR.fgVeryBright,
-                      }}>
+                      <span key={r.slug} className="trama-info-panel__tag">
                         {r.label}
                       </span>
                     ))}
@@ -187,12 +126,7 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
         {node.tags.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {node.tags.map(tag => (
-              <span key={tag} style={{
-                ...toReactStyle(UI_TEXT.panelTag),
-                padding: '2px 7px',
-                border: `1px solid ${UI_COLOR.border}`,
-                color: UI_COLOR.fgDim,
-              }}>
+              <span key={tag} className="trama-info-panel__tag trama-info-panel__tag--dim">
                 {tag}
               </span>
             ))}
@@ -200,34 +134,17 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
         )}
 
         {conns.length > 0 && (
-          <div style={{
-            borderTop: `1px solid ${UI_COLOR.borderSubtle}`,
-            paddingTop: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}>
-            <div style={{
-              ...toReactStyle(UI_TEXT.panelSection),
-              color: UI_COLOR.accent,
-            }}>
+          <div className="trama-info-panel__divider" style={{ gap: 12 }}>
+            <div className="trama-info-panel__section">
               CONEXIONES
             </div>
             {Object.entries(byPred).map(([pred, cs]) => (
               <div key={pred} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <div style={{
-                  ...toReactStyle(UI_TEXT.panelMeta),
-                  color: UI_COLOR.fgSubtle,
-                }}>
+                <div className="trama-info-panel__meta">
                   {PRED_LABELS[pred] ?? pred}
                 </div>
                 {cs.map(c => (
-                  <div key={c.id} style={{
-                    ...toReactStyle(UI_TEXT.panelSubtitle),
-                    color: UI_COLOR.fgBright,
-                    paddingLeft: 9,
-                    borderLeft: `1px solid ${UI_COLOR.accentBorder}`,
-                  }}>
+                  <div key={c.id} className="trama-info-panel__subtitle">
                     {c.label}
                   </div>
                 ))}
@@ -236,14 +153,7 @@ export function InfoPanel({ node, onClose, getConns }: InfoPanelProps) {
           </div>
         )}
 
-        <div style={{
-          marginTop: 'auto',
-          borderTop: `1px solid ${UI_COLOR.borderSubtle}`,
-          paddingTop: 10,
-          ...toReactStyle(UI_TEXT.panelMeta),
-          color: UI_COLOR.border,
-          wordBreak: 'break-all',
-        }}>
+        <div className="trama-info-panel__footer">
           {node.id}
         </div>
       </>)}
@@ -267,9 +177,9 @@ function hasRelationMeta(node: TNode): boolean {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div style={{ display: 'flex', gap: 8, ...toReactStyle(UI_TEXT.panelValue) }}>
-      <span style={{ color: UI_COLOR.fgVerySubtle, minWidth: 52 }}>{k}</span>
-      <span style={{ color: UI_COLOR.fgMuted }}>{v}</span>
+    <div className="trama-info-panel__value">
+      <span className="trama-info-panel__value-label">{k}</span>
+      <span className="trama-info-panel__value-text">{v}</span>
     </div>
   )
 }
