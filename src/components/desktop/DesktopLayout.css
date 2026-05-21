@@ -269,6 +269,47 @@
   box-shadow: var(--shadow-ui);
 }
 
+/* Quipu Selector */
+.trama-selector {
+  pointer-events: auto;
+  display: flex;
+  gap: 4px;
+  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 4px 6px;
+}
+
+.trama-selector__btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+
+.trama-selector__btn--active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent);
+}
+
+.trama-selector__btn--available {
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+}
+
+.trama-selector__btn--disabled {
+  color: color-mix(in srgb, var(--color-fg) 22%, transparent);
+  cursor: default;
+}
+
 /* Tablet adjustments */
 @media (min-width: 768px) and (max-width: 1023px) {
   .desktop-layout__wordmark {
