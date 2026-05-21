@@ -114,6 +114,8 @@ export function useGraphInteraction(
     // ── Mouse: hover ──────────────────────────────────────────
     const onMouseMove = (e: MouseEvent) => {
       if (s.intro !== "done") return;
+      // Don't update hover during drag operations to prevent rope flickering
+      if (s.dragNode || s.dragging) return;
       const [mx, my] = canvasCoords(e);
       const cv = getCanvas();
       if (!cv) return;
