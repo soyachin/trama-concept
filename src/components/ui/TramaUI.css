@@ -333,9 +333,11 @@
   backdrop-filter: blur(12px);
   border: 1px solid var(--color-border-subtle);
   border-radius: 999px;
-  padding: 4px 4px 4px 16px;
+  padding: 2px 4px 2px 12px;
   box-shadow: var(--shadow-panel);
   animation: searchExpand 200ms ease;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 @keyframes searchExpand {
@@ -352,8 +354,10 @@
 .trama-search__input--mobile {
   width: 160px;
   font-size: 16px;
-  padding: 4px 0;
+  padding: 0;
   background: transparent;
+  height: 28px;
+  line-height: 28px;
 }
 
 .trama-search__close {
@@ -370,6 +374,7 @@
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
+  padding: 0;
 }
 
 /* ─── Rope Legend ─── */
@@ -494,8 +499,9 @@
   }
 
   .trama-top-bar {
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
+    min-height: 36px;
   }
 
   .trama-wordmark {
