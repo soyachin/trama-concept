@@ -518,6 +518,7 @@
   .trama-search__input {
     width: 200px;
     padding: 8px 14px;
+    font-size: 16px; /* Previene zoom automático en iOS */
   }
 
   .trama-legend {
