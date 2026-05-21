@@ -91,7 +91,6 @@ export function RopeLegend() {
         
         {open && (
           <div ref={popoverRef} className="trama-legend__popover">
-            <div className="trama-legend__popover-title">Tipos de cuerdas</div>
             <canvas ref={mobileCanvasRef} />
           </div>
         )}
