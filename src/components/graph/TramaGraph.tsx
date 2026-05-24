@@ -18,7 +18,7 @@ import { MobileQuipuMenu } from "../mobile/MobileQuipuMenu";
 import "../desktop/DesktopLayout.css";
 import "../mobile/MobileLayout.css";
 
-const DEFAULT_QUIPU_ID = "social";
+const DEFAULT_QUIPU_ID = "quipu-social";
 
 export function TramaGraph() {
   const containerRef = useRef<HTMLDivElement>(null);

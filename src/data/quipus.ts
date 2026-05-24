@@ -1,4 +1,4 @@
-import type { TNode, TEdge, QuipuSummary, NodeMetaValue, RelatedRef } from '../types/graph'
+import type { TNode, TEdge, QuipuSummary, NodeMetaValue } from '../types/graph'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api/v1'
 
@@ -6,25 +6,24 @@ interface ApiNode {
   id: string
   label: string
   type: string
-  uri: string
+  groupKey: string | null
   metadata: Record<string, NodeMetaValue>
 }
 interface ApiEdge { source: string; target: string; predicate: string }
-interface ApiGroup { key: string; nodeIds: string[] }
 interface ApiQuipuGraph {
   id: string
   label: string
   groupBy: string | null
   nodes: ApiNode[]
   edges: ApiEdge[]
-  groups: ApiGroup[]
+  groups: string[]
 }
 
 export interface QuipuGraph {
   id: string
   label: string
   groupBy: string | null
-  groups: ApiGroup[]
+  groups: { key: string }[]
   nodes: TNode[]
   edges: TEdge[]
 }
@@ -65,33 +64,28 @@ function buildQuipuGraph(data: ApiQuipuGraph): QuipuGraph {
   }
 
   const areaHeaders: TNode[] = data.groups.map(g => ({
-    id: AREA_PREFIX + g.key,
+    id: AREA_PREFIX + g,
     type: 'AreaHeader',
-    label: g.key,
+    label: g,
     description: '',
     tags: [],
     synthetic: true,
-    groupKey: g.key,
+    groupKey: g,
     x: 0, y: 0, vx: 0, vy: 0,
   }))
 
-  const dataNodes: TNode[] = data.nodes.map(n => {
-    const groupKey = pickGroupKey(n.metadata, data.groupBy)
-    return {
-      id: n.id,
-      type: n.type,
-      label: n.label,
-      description: '',
-      tags: [],
-      uri: n.uri,
-      metadata: n.metadata,
-      area: typeof n.metadata?.area === 'string' ? (n.metadata.area as string) : undefined,
-      groupKey,
-      x: 0, y: 0, vx: 0, vy: 0,
-    }
-  })
+  const dataNodes: TNode[] = data.nodes.map(n => ({
+    id: n.id,
+    type: n.type,
+    label: n.label,
+    description: '',
+    tags: [],
+    metadata: n.metadata,
+    groupKey: n.groupKey ?? undefined,
+    x: 0, y: 0, vx: 0, vy: 0,
+  }))
 
-  const dataNodeIds = new Set(dataNodes.map(n => n.id))
+  const dataNodeIds = new Set(data.nodes.map(n => n.id))
   const dataEdges: TEdge[] = data.edges
     .filter(e => dataNodeIds.has(e.source) && dataNodeIds.has(e.target))
     .map(e => ({
@@ -123,51 +117,28 @@ function buildQuipuGraph(data: ApiQuipuGraph): QuipuGraph {
     id: data.id,
     label: data.label,
     groupBy: data.groupBy,
-    groups: data.groups,
+    groups: data.groups.map(g => ({ key: g })),
     nodes: [root, ...areaHeaders, ...dataNodes],
     edges: [...rootEdges, ...areaEdges, ...dataEdges],
   }
 }
 
-function pickGroupKey(
-  metadata: Record<string, NodeMetaValue> | undefined,
-  groupBy: string | null,
-): string | undefined {
-  if (!groupBy || !metadata) return undefined
-  const v = metadata[groupBy]
-  if (typeof v === 'string') return v
-  if (Array.isArray(v) && v.length > 0) {
-    const first = v[0]
-    if (typeof first === 'string') return first
-    if (isRelatedRef(first)) return first.label
-  }
-  return undefined
-}
-
-function isRelatedRef(v: unknown): v is RelatedRef {
-  return typeof v === 'object' && v !== null && 'slug' in v && 'label' in v
-}
-
 // Fallback: arma un quipu social con datos de muestra cuando el backend no
 // responde. Útil para diseñar offline.
 export function getDummyQuipuGraph(): QuipuGraph {
-  const groups: ApiGroup[] = [
-    { key: 'Especializada', nodeIds: ['club-acm-utec', 'club-ieee-utec', 'club-giit'] },
-    { key: 'Arte y Cultura', nodeIds: ['club-tuna', 'club-teatro'] },
-    { key: 'Clubes Deportivos', nodeIds: ['club-futbol'] },
-  ]
+  const groups = ['Especializada', 'Arte y Cultura', 'Clubes Deportivos']
   const dummy: ApiQuipuGraph = {
-    id: 'social',
+    id: 'quipu-social',
     label: 'Trama social',
     groupBy: 'area',
     groups,
     nodes: [
-      { id: 'club-acm-utec', label: 'ACM UTEC', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Especializada', perteneceA: [{ slug: 'cc', label: 'Ciencia de la Computación' }] } },
-      { id: 'club-ieee-utec', label: 'IEEE UTEC', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Especializada', perteneceA: [{ slug: 'ie', label: 'Ingeniería Electrónica' }] } },
-      { id: 'club-giit', label: 'GIIT Robotics', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Especializada' } },
-      { id: 'club-tuna', label: 'Tuna UTEC', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Arte y Cultura' } },
-      { id: 'club-teatro', label: 'Grupo de Teatro', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Arte y Cultura' } },
-      { id: 'club-futbol', label: 'Club de Fútbol', type: 'OrganizacionEstudiantil', uri: '', metadata: { area: 'Clubes Deportivos' } },
+      { id: 'club-acm-utec', label: 'ACM UTEC', type: 'OrganizacionEstudiantil', groupKey: 'Especializada', metadata: { area: 'Especializada', perteneceA: ['Ciencia de la Computación'] } },
+      { id: 'club-ieee-utec', label: 'IEEE UTEC', type: 'OrganizacionEstudiantil', groupKey: 'Especializada', metadata: { area: 'Especializada', perteneceA: ['Ingeniería Electrónica'] } },
+      { id: 'club-giit', label: 'GIIT Robotics', type: 'OrganizacionEstudiantil', groupKey: 'Especializada', metadata: { area: 'Especializada' } },
+      { id: 'club-tuna', label: 'Tuna UTEC', type: 'OrganizacionEstudiantil', groupKey: 'Arte y Cultura', metadata: { area: 'Arte y Cultura' } },
+      { id: 'club-teatro', label: 'Grupo de Teatro', type: 'OrganizacionEstudiantil', groupKey: 'Arte y Cultura', metadata: { area: 'Arte y Cultura' } },
+      { id: 'club-futbol', label: 'Club de Fútbol', type: 'OrganizacionEstudiantil', groupKey: 'Clubes Deportivos', metadata: { area: 'Clubes Deportivos' } },
     ],
     edges: [
       { source: 'club-acm-utec', target: 'club-ieee-utec', predicate: 'alianzaCon' },
