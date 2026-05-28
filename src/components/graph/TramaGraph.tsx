@@ -4,7 +4,6 @@ import { UI_COLOR, toReactStyle } from "../../config/typography";
 import { fetchQuipus } from "../../data/quipus";
 import { useQuipuSession } from "../../hooks/useQuipuSession";
 import { useGraphSimulation } from "./useGraphSimulation";
-import { useGraphInteraction } from "./useGraphInteraction";
 import { QuipuSelector } from "../ui/QuipuSelector";
 import { DesktopLayout } from "../desktop/DesktopLayout";
 import { DesktopSearch } from "../desktop/DesktopSearch";
@@ -88,8 +87,14 @@ export function TramaGraph() {
     [],
   );
 
-  useGraphSimulation(containerRef, sessionRef, searchRef, dataVersion);
-  useGraphInteraction(containerRef, sessionRef, setPanelNode, dataVersion);
+  useGraphSimulation({
+    containerRef,
+    sessionRef,
+    searchRef,
+    onNodeSelect: setPanelNode,
+    onNodeHover: () => {},
+    dataVersion,
+  });
 
   if (loading) {
     return (
