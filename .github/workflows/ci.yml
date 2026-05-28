@@ -33,4 +33,4 @@ jobs:
         run: pnpm test
 
       - name: Build
-        run: vite build
+        run: pnpm exec vite build
