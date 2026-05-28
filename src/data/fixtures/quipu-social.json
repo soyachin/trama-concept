@@ -1,0 +1,54 @@
+{
+  "id": "quipu-social",
+  "label": "Trama social",
+  "group_by": "area",
+  "nodes": [
+    {
+      "id": "club-acm-utec",
+      "label": "ACM UTEC",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Especializada",
+      "metadata": { "area": "Especializada", "perteneceA": "Ciencia de la Computación" }
+    },
+    {
+      "id": "club-ieee-utec",
+      "label": "IEEE UTEC",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Especializada",
+      "metadata": { "area": "Especializada", "perteneceA": "Ingeniería Electrónica" }
+    },
+    {
+      "id": "club-giit",
+      "label": "GIIT Robotics",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Especializada",
+      "metadata": { "area": "Especializada" }
+    },
+    {
+      "id": "club-tuna",
+      "label": "Tuna UTEC",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Arte y Cultura",
+      "metadata": { "area": "Arte y Cultura" }
+    },
+    {
+      "id": "club-teatro",
+      "label": "Grupo de Teatro",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Arte y Cultura",
+      "metadata": { "area": "Arte y Cultura" }
+    },
+    {
+      "id": "club-futbol",
+      "label": "Club de Fútbol",
+      "type": "OrganizacionEstudiantil",
+      "group_key": "Clubes Deportivos",
+      "metadata": { "area": "Clubes Deportivos" }
+    }
+  ],
+  "edges": [
+    { "source": "club-acm-utec", "target": "club-ieee-utec", "predicate": "alianzaCon" },
+    { "source": "club-ieee-utec", "target": "club-giit", "predicate": "alianzaCon" }
+  ],
+  "groups": ["Especializada", "Arte y Cultura", "Clubes Deportivos"]
+}

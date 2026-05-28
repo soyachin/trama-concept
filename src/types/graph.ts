@@ -33,6 +33,14 @@ export interface TEdge {
   synthetic?: boolean
 }
 
+export interface QuipuGraph {
+  id: string
+  label: string
+  groups: { key: string }[]
+  nodes: TNode[]
+  edges: TEdge[]
+}
+
 export interface QuipuSummary {
   id: string
   label: string
