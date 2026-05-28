@@ -214,8 +214,8 @@ Crear una frontera explícita entre el modelo del backend y el modelo interno de
 
 ## Definition of Done
 
-- No existe ninguna interfaz Api* escrita a mano en el frontend.
-- src/generated/api.ts está en el repo con header de advertencia.
+- Las interfaces Api* existen únicamente en adapter.ts y en ningún otro archivo de src/.
+- src/generated/api.ts está en el repo con header de advertencia (no aplica: repos separados, sin openapi-typescript).
 - getDummyQuipuGraph no existe en el codebase.
 - pnpm build pasa sin warnings.
 
