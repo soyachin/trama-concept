@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from 'react'
-import type { ExplorationSession } from '../types/graph'
-import { fetchQuipuGraph } from '../data/quipus'
+import type { TNode, ExplorationSession } from '../types/graph'
+import { fetchQuipuGraph, fetchNodeDetail } from '../data/quipus'
 import { assignAreaColors } from '../lib/tokens'
+import { TYPE_TO_ENDPOINT, enrichNode } from '../data/adapter'
 
 function createInitialSession(quipuId: string): ExplorationSession {
   return {
@@ -23,11 +24,13 @@ function createInitialSession(quipuId: string): ExplorationSession {
   }
 }
 
-export function useQuipuSession(quipuId: string) {
+export function useQuipuSession(quipuId: string, selectedNodeId: string | null) {
   const sessionRef = useRef<ExplorationSession>(createInitialSession(quipuId))
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ nodes: 0, edges: 0 })
   const [dataVersion, setDataVersion] = useState(0)
+  const [enrichedNode, setEnrichedNode] = useState<TNode | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -57,5 +60,34 @@ export function useQuipuSession(quipuId: string) {
     }
   }, [quipuId])
 
-  return { sessionRef, loading, stats, dataVersion }
+  useEffect(() => {
+    let cancelled = false
+
+    if (!selectedNodeId) {
+      setEnrichedNode(null)
+      return
+    }
+
+    const node = sessionRef.current.nodes.find(n => n.id === selectedNodeId)
+    if (!node || node.synthetic) return
+
+    const endpoint = TYPE_TO_ENDPOINT[node.type]
+    if (!endpoint) return
+
+    ;(async () => {
+      setDetailLoading(true)
+      try {
+        const detail = await fetchNodeDetail(node.id, endpoint)
+        if (!cancelled) setEnrichedNode(enrichNode(node, detail))
+      } catch {
+        if (!cancelled) setEnrichedNode(null)
+      } finally {
+        if (!cancelled) setDetailLoading(false)
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [selectedNodeId, dataVersion])
+
+  return { sessionRef, loading, stats, dataVersion, enrichedNode, detailLoading }
 }

@@ -53,11 +53,12 @@ type SheetState = 'closed' | 'collapsed' | 'expanded'
 
 interface MobileInfoPanelProps {
   node: TNode | null
+  loading: boolean
   onClose: () => void
   getConns: (id: string) => { predicate: string; id: string; label: string }[]
 }
 
-export function MobileInfoPanel({ node, onClose, getConns }: MobileInfoPanelProps) {
+export function MobileInfoPanel({ node, loading, onClose, getConns }: MobileInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const [sheetState, setSheetState] = useState<SheetState>('closed')
   
@@ -183,44 +184,54 @@ export function MobileInfoPanel({ node, onClose, getConns }: MobileInfoPanelProp
             <div className="mobile-sheet__body">{node.description}</div>
           )}
 
-          {hasLiteralMeta(node) && (
-            <div className="mobile-sheet__divider">
-              {Object.entries(META_LITERAL_LABELS).map(([k, label]) => {
-                const v = node.metadata?.[k]
-                if (typeof v !== 'string' || !v) return null
-                return <Row key={k} k={label} v={v} />
-              })}
-              {node.founded && <Row k="fundado" v={node.founded} />}
-              {node.ciclo && <Row k="ciclo" v={node.ciclo} />}
-            </div>
-          )}
-
-          {hasRelationMeta(node) && (
+          {loading ? (
             <div className="mobile-sheet__divider" style={{ gap: 10 }}>
-              {Object.entries(META_RELATION_LABELS).map(([pred, label]) => {
-                const refs = node.metadata?.[pred]
-                if (!refs || !isRelatedList(refs)) return null
-                return (
-                  <div key={pred} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="mobile-sheet__meta">{label}</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                      {refs.map(r => (
-                        <span key={r.slug} className="mobile-sheet__tag">{r.label}</span>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
+              <div className="skeleton" style={{ height: 14, width: '55%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 14, width: '45%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 28, width: '70%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 28, width: '60%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 28, width: '40%' }} />
             </div>
-          )}
+          ) : (<>
+            {hasLiteralMeta(node) && (
+              <div className="mobile-sheet__divider">
+                {Object.entries(META_LITERAL_LABELS).map(([k, label]) => {
+                  const v = node.metadata?.[k]
+                  if (typeof v !== 'string' || !v) return null
+                  return <Row key={k} k={label} v={v} />
+                })}
+                {node.founded && <Row k="fundado" v={node.founded} />}
+                {node.ciclo && <Row k="ciclo" v={node.ciclo} />}
+              </div>
+            )}
 
-          {node.tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              {node.tags.map(tag => (
-                <span key={tag} className="mobile-sheet__tag mobile-sheet__tag--dim">{tag}</span>
-              ))}
-            </div>
-          )}
+            {hasRelationMeta(node) && (
+              <div className="mobile-sheet__divider" style={{ gap: 10 }}>
+                {Object.entries(META_RELATION_LABELS).map(([pred, label]) => {
+                  const refs = node.metadata?.[pred]
+                  if (!refs || !isRelatedList(refs)) return null
+                  return (
+                    <div key={pred} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div className="mobile-sheet__meta">{label}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {refs.map(r => (
+                          <span key={r.slug} className="mobile-sheet__tag">{r.label}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {node.tags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {node.tags.map(tag => (
+                  <span key={tag} className="mobile-sheet__tag mobile-sheet__tag--dim">{tag}</span>
+                ))}
+              </div>
+            )}
+          </>)}
 
           {conns.length > 0 && (
             <div className="mobile-sheet__divider" style={{ gap: 12 }}>

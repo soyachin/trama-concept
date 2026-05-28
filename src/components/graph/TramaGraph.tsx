@@ -32,7 +32,9 @@ export function TramaGraph() {
   const [quipus, setQuipus] = useState<QuipuSummary[]>([]);
   const [activeQuipuId, setActiveQuipuId] = useState<string>(DEFAULT_QUIPU_ID);
 
-  const { sessionRef, loading, stats, dataVersion } = useQuipuSession(activeQuipuId);
+  const { sessionRef, loading, stats, dataVersion, enrichedNode, detailLoading } = useQuipuSession(activeQuipuId, panelNode?.id ?? null);
+
+  const displayNode = enrichedNode ?? panelNode;
 
   // Platform detection - single source of truth
   const [isMobile, setIsMobile] = useState(() =>
@@ -116,7 +118,8 @@ export function TramaGraph() {
 
   const infoPanel = (
     <DesktopInfoPanel
-      node={panelNode}
+      node={displayNode}
+      loading={detailLoading}
       onClose={() => setPanelNode(null)}
       getConns={getConns}
     />
@@ -124,7 +127,8 @@ export function TramaGraph() {
 
   const mobileInfoPanel = (
     <MobileInfoPanel
-      node={panelNode}
+      node={displayNode}
+      loading={detailLoading}
       onClose={() => setPanelNode(null)}
       getConns={getConns}
     />

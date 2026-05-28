@@ -1,4 +1,4 @@
-import type { TNode, TEdge, QuipuGraph, NodeMetaValue } from '../types/graph'
+import type { TNode, TEdge, QuipuGraph, NodeMetaValue, RelatedRef } from '../types/graph'
 
 interface ApiQuipuNode {
   id: string
@@ -98,4 +98,60 @@ export function adaptQuipuGraph(raw: ApiQuipuGraph): QuipuGraph {
     nodes: [root, ...areaHeaders, ...dataNodes],
     edges: [...rootEdges, ...areaEdges, ...dataEdges],
   }
+}
+
+// ── Node detail enrichment ───────────────────────────────────────
+
+export interface ApiRelationItem {
+  predicate: string
+  target: string
+  target_label: string
+  direction: string | null
+}
+
+export interface ApiResourceDetail {
+  uri: string
+  slug: string
+  label: string
+  properties: Record<string, string>
+  relations: ApiRelationItem[]
+}
+
+export const TYPE_TO_ENDPOINT: Record<string, string> = {
+  OrganizacionEstudiantil: 'organizaciones-estudiantiles',
+  Docente: 'docentes',
+  Club: 'clubes',
+  Carrera: 'carreras',
+  Curso: 'cursos',
+  Departamento: 'departamentos',
+  GrupoInvestigacion: 'grupos-investigacion',
+  Laboratorio: 'laboratorios',
+  Equipo: 'equipos',
+  Proyecto: 'proyectos',
+}
+
+export function enrichNode(node: TNode, detail: ApiResourceDetail): TNode {
+  const meta: Record<string, NodeMetaValue> = { ...detail.properties }
+
+  for (const rel of detail.relations) {
+    const existing = meta[rel.predicate]
+    if (
+      Array.isArray(existing) &&
+      existing.length > 0 &&
+      typeof existing[0] === 'object' &&
+      'slug' in (existing[0] as object)
+    ) {
+      ;(existing as RelatedRef[]).push({ slug: rel.target, label: rel.target_label })
+    } else {
+      meta[rel.predicate] = [{ slug: rel.target, label: rel.target_label }]
+    }
+  }
+
+  if (node.metadata) {
+    for (const [k, v] of Object.entries(node.metadata)) {
+      if (!(k in meta)) meta[k] = v
+    }
+  }
+
+  return { ...node, metadata: meta }
 }
