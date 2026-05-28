@@ -1,4 +1,5 @@
 import type { TNode, TEdge, QuipuGraph, NodeMetaValue, RelatedRef } from '../types/graph'
+import { seededWaveOff } from '../lib/utils'
 
 interface ApiQuipuNode {
   id: string
@@ -70,14 +71,14 @@ export function adaptQuipuGraph(raw: ApiQuipuGraph): QuipuGraph {
       source: e.source,
       target: e.target,
       predicate: e.predicate,
-      waveOff: Math.random() * Math.PI * 2,
+      waveOff: seededWaveOff(e.source, e.target, e.predicate),
     }))
 
   const rootEdges: TEdge[] = areaHeaders.map(h => ({
     source: ROOT_ID,
     target: h.id,
     predicate: 'quipu',
-    waveOff: Math.random() * Math.PI * 2,
+      waveOff: seededWaveOff(ROOT_ID, h.id, 'quipu'),
     synthetic: true,
   }))
 
@@ -87,7 +88,7 @@ export function adaptQuipuGraph(raw: ApiQuipuGraph): QuipuGraph {
       source: AREA_PREFIX + n.groupKey!,
       target: n.id,
       predicate: 'perteneceArea',
-      waveOff: Math.random() * Math.PI * 2,
+      waveOff: seededWaveOff(AREA_PREFIX + n.groupKey!, n.id, 'perteneceArea'),
       synthetic: true,
     }))
 

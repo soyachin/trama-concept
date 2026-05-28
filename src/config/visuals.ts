@@ -93,7 +93,7 @@ function hexToRgb(hex: string): [number, number, number] {
 /** Devuelve [r, g, b] para un nodo, priorizando su área (groupKey).
  *  Fallback al color por tipo si no tiene área asignada. */
 export function getNodeColor(n: TNode): [number, number, number] {
-  const groupKey = n.type === 'AreaHeader' ? n.groupKey : n.groupKey
+  const groupKey = n.groupKey
   if (groupKey) {
     return areaColor(groupKey)
   }

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import type { TNode, ExplorationSession } from '../types/graph'
 import { fetchQuipuGraph, fetchNodeDetail } from '../data/quipus'
-import { assignAreaColors } from '../lib/tokens'
+import { computeAreaColors, applyAreaColors } from '../lib/tokens'
 import { TYPE_TO_ENDPOINT, enrichNode } from '../data/adapter'
 
 function createInitialSession(quipuId: string): ExplorationSession {
@@ -41,7 +41,8 @@ export function useQuipuSession(quipuId: string, selectedNodeId: string | null) 
     ;(async () => {
       const data = await fetchQuipuGraph(quipuId)
       if (cancelled) return
-      assignAreaColors(data.groups)
+      const areaMap = computeAreaColors(data.groups)
+      applyAreaColors(areaMap)
       sessionRef.current.nodes = data.nodes
       sessionRef.current.edges = data.edges
       setStats({

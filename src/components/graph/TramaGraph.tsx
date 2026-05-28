@@ -94,6 +94,7 @@ export function TramaGraph() {
     onNodeSelect: setPanelNode,
     onNodeHover: () => {},
     dataVersion,
+    isMobile,
   });
 
   if (loading) {

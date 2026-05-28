@@ -3,7 +3,7 @@ import p5 from "p5"
 import * as d3 from "d3-force"
 import type { TNode } from "../../types/graph"
 import type { ExplorationSession } from "../../types/graph"
-import { BAYER } from "../../config/visuals"
+import { BAYER, NODE_VISUALS, DEFAULT_VISUAL } from "../../config/visuals"
 import { TEXT, composeFont, COLOR, composeRgba } from "../../config/typography"
 import { initLayout } from "../../lib/layout"
 import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render"
@@ -33,6 +33,7 @@ export interface P5CanvasConfig {
   onNodeSelect: (node: TNode | null) => void
   onNodeHover: (nodeId: string | null) => void
   dataVersion: number
+  isMobile: boolean
 }
 
 // ─── Interaction constants ────────────────────────────────────────
@@ -64,8 +65,10 @@ function hitTest(
 ): TNode | null {
   const [gx, gy] = toGraph(mx, my, s, canvasW, canvasH)
   for (const n of nodes) {
+    const visual = NODE_VISUALS[n.type] ?? DEFAULT_VISUAL
+    const hitRadius = Math.max(10 / s.camera.zoom, visual.baseRadius * 1.4)
     const dx = gx - n.x, dy = gy - n.y
-    if (dx * dx + dy * dy < 18 * 18) return n
+    if (dx * dx + dy * dy < hitRadius * hitRadius) return n
   }
   return null
 }
@@ -108,13 +111,15 @@ function flyTo(
 }
 
 export function useGraphSimulation(config: P5CanvasConfig) {
-  const { containerRef, sessionRef, searchRef, onNodeSelect, onNodeHover, dataVersion } = config
+  const { containerRef, sessionRef, searchRef, onNodeSelect, onNodeHover, dataVersion, isMobile } = config
 
   const onNodeSelectRef = useRef(onNodeSelect)
   const onNodeHoverRef = useRef(onNodeHover)
+  const isMobileRef = useRef(isMobile)
   useEffect(() => {
     onNodeSelectRef.current = onNodeSelect
     onNodeHoverRef.current = onNodeHover
+    isMobileRef.current = isMobile
   })
 
   useEffect(() => {
@@ -278,10 +283,10 @@ export function useGraphSimulation(config: P5CanvasConfig) {
         h: number,
       ) {
         const s = sessionRef.current
-        const isMobile = w < 768
-        const quoteSize = isMobile ? Math.max(16, TEXT.introQuote.size * 0.7) : TEXT.introQuote.size
-        const subSize = isMobile ? Math.max(11, TEXT.introSub.size * 0.8) : TEXT.introSub.size
-        const ctaSize = isMobile ? Math.max(10, TEXT.introCta.size * 0.85) : TEXT.introCta.size
+        const isMobileIntro = isMobileRef.current
+        const quoteSize = isMobileIntro ? Math.max(16, TEXT.introQuote.size * 0.7) : TEXT.introQuote.size
+        const subSize = isMobileIntro ? Math.max(11, TEXT.introSub.size * 0.8) : TEXT.introSub.size
+        const ctaSize = isMobileIntro ? Math.max(10, TEXT.introCta.size * 0.85) : TEXT.introCta.size
 
         if (s.intro === "showing") {
           ctx.fillStyle = composeRgba(COLOR.introBg)
@@ -291,7 +296,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
           ctx.fillStyle = composeRgba(COLOR.introText)
           ctx.font = composeFont(TEXT.introQuote, quoteSize)
 
-          if (isMobile) {
+          if (isMobileIntro) {
             ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40)
             ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16)
             ctx.fillText('ya sabe, pero nunca te dijo."', w / 2, h / 2 + 8)
@@ -307,7 +312,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
           ctx.font = composeFont(TEXT.introSub, subSize)
           ctx.fillStyle = composeRgba(COLOR.introSub)
 
-          if (isMobile) {
+          if (isMobileIntro) {
             ctx.fillText("Explora. Cada nodo es una puerta.", w / 2, h / 2 + 44)
             ctx.fillText("Cada arista, una conversación pendiente.", w / 2, h / 2 + 64)
           } else {
@@ -320,7 +325,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
 
           ctx.font = composeFont(TEXT.introCta, ctaSize)
           ctx.fillStyle = composeRgba(COLOR.introCta)
-          ctx.fillText("[ toca para comenzar ]", w / 2, h / 2 + (isMobile ? 100 : 84))
+          ctx.fillText("[ toca para comenzar ]", w / 2, h / 2 + (isMobileIntro ? 100 : 84))
         } else if (s.intro === "dissolving") {
           s.dissolve += 0.022
           if (s.dissolve >= 1) {
@@ -343,7 +348,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
             ctx.textBaseline = "middle"
             ctx.font = composeFont(TEXT.introQuote, quoteSize)
 
-            if (isMobile) {
+            if (isMobileIntro) {
               ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40)
               ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16)
               ctx.fillText('ya sabe, pero nunca te dijo."', w / 2, h / 2 + 8)
