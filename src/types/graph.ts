@@ -47,3 +47,27 @@ export interface QuipuSummary {
   description: string
   status: 'active' | 'coming-soon'
 }
+
+export interface CameraState {
+  panX: number
+  panY: number
+  zoom: number
+}
+
+export interface ExplorationSession {
+  quipuId: string
+  nodes: TNode[]
+  edges: TEdge[]
+  camera: CameraState
+  selId: string | null
+  hovId: string | null
+  dragging: boolean
+  dragNode: TNode | null
+  dStartX: number
+  dStartY: number
+  time: number
+  intro: 'showing' | 'dissolving' | 'done'
+  introSec: number
+  dissolve: number
+  simulation: unknown
+}

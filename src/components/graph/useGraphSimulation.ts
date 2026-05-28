@@ -1,45 +1,29 @@
 import { useEffect } from "react";
 import p5 from "p5";
 import * as d3 from "d3-force";
-import type { TNode, TEdge } from "../../types/graph";
+import type { TNode } from "../../types/graph";
+import type { ExplorationSession } from "../../types/graph";
 import { BAYER } from "../../config/visuals";
 import { TEXT, composeFont, COLOR, composeRgba } from "../../config/typography";
 import { initLayout } from "../../lib/layout";
 import { drawRope, drawKnot, getWovenTexture, isInViewport, edgeInViewport } from "../../lib/render";
 
-export interface SimulationState {
-  time: number;
-  panX: number;
-  panY: number;
-  zoom: number;
-  selId: string | null;
-  hovId: string | null;
-  intro: "showing" | "dissolving" | "done";
-  introSec: number;
-  dissolve: number;
-  dragging: boolean;
-  dStartX: number;
-  dStartY: number;
-  dragNode: TNode | null;
-  simulation: d3.Simulation<TNode, undefined> | null;
-}
-
 export function useGraphSimulation(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  nodes: TNode[],
-  edges: TEdge[],
+  sessionRef: React.MutableRefObject<ExplorationSession>,
   searchRef: React.RefObject<string>,
-  stateRef: React.MutableRefObject<SimulationState>,
+  dataVersion: number,
 ) {
   useEffect(() => {
-    if (!containerRef.current || nodes.length === 0) return;
-    const s = stateRef.current;
+    if (!containerRef.current) return;
+    const session = sessionRef.current;
+    const nodes = session.nodes;
+    const edges = session.edges;
+    if (nodes.length === 0) return;
 
-    // Build lookup map for O(1) access
     const nodeMap = new Map<string, TNode>();
     for (const n of nodes) nodeMap.set(n.id, n);
 
-    // Pre-build adjacency for fast connected-check
     const adj = new Map<string, Set<string>>();
     for (const e of edges) {
       if (!adj.has(e.source)) adj.set(e.source, new Set());
@@ -65,11 +49,8 @@ export function useGraphSimulation(
           })
           .filter(Boolean) as { source: TNode; target: TNode }[];
 
-        // Detect quipu mode by presence of synthetic structural nodes.
         const hasSynthetic = nodes.some(n => n.synthetic);
 
-        // Tuned force params: quipu mode has a pinned scaffold so we can
-        // afford stronger repulsion on free nodes for breathing room.
         const chargeStr = hasSynthetic
           ? -180
           : nodes.length > 500 ? -120 : nodes.length > 100 ? -250 : -400;
@@ -78,7 +59,7 @@ export function useGraphSimulation(
           : nodes.length > 500 ? 80 : 120;
         const linkStr = hasSynthetic ? 0.04 : 0.008;
 
-        s.simulation = d3
+        const sim = d3
           .forceSimulation(nodes)
           .force("link", d3.forceLink(links).distance(linkDist).strength(linkStr))
           .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(600))
@@ -87,15 +68,11 @@ export function useGraphSimulation(
           .alphaMin(0)
           .alphaTarget(0.008)
           .velocityDecay(0.42);
-        s.simulation.force("center", d3.forceCenter(p.width / 2, p.height / 2));
-        s.simulation.on("tick", () => {});
+        sim.force("center", d3.forceCenter(p.width / 2, p.height / 2));
+        sim.on("tick", () => {});
+        session.simulation = sim;
       };
 
-      // ── DPR change listener (MDN pattern) ─────────────────────
-      // Fires when the window moves between monitors with different
-      // devicePixelRatio (e.g. Retina ↔ external display).  Each
-      // listener is registered with { once: true } and re-registered
-      // on every change so the media query stays current.
       function onDprChange() {
         const dpr = Math.ceil(window.devicePixelRatio) || 1;
         p.pixelDensity(dpr);
@@ -110,6 +87,7 @@ export function useGraphSimulation(
       };
 
       p.draw = () => {
+        const s = sessionRef.current;
         s.time += 0.004;
         const dt = (p as unknown as { deltaTime: number }).deltaTime;
         s.introSec += dt ? dt / 1000 : 0.016;
@@ -120,33 +98,32 @@ export function useGraphSimulation(
         ctx.fillStyle = composeRgba(COLOR.canvasBg);
         ctx.fillRect(0, 0, w, h);
 
-        // Woven texture background (pre-rendered at buffer resolution)
         const dpr = Math.ceil(window.devicePixelRatio) || 1;
         const wovenTex = getWovenTexture(w, h, dpr);
         ctx.drawImage(wovenTex, 0, 0, w, h);
 
         ctx.save();
-        ctx.translate(s.panX + w / 2, s.panY + h / 2);
-        ctx.scale(s.zoom, s.zoom);
+        ctx.translate(s.camera.panX + w / 2, s.camera.panY + h / 2);
+        ctx.scale(s.camera.zoom, s.camera.zoom);
         ctx.translate(-w / 2, -h / 2);
 
-        // Compute viewport bounds in graph space for culling
-        const invZoom = 1 / s.zoom;
-        const vx1 = (0 - s.panX - w / 2) * invZoom + w / 2;
-        const vy1 = (0 - s.panY - h / 2) * invZoom + h / 2;
-        const vx2 = (w - s.panX - w / 2) * invZoom + w / 2;
-        const vy2 = (h - s.panY - h / 2) * invZoom + h / 2;
-        const margin = 60; // extra margin for labels/halos
+        const invZoom = 1 / s.camera.zoom;
+        const vx1 = (0 - s.camera.panX - w / 2) * invZoom + w / 2;
+        const vy1 = (0 - s.camera.panY - h / 2) * invZoom + h / 2;
+        const vx2 = (w - s.camera.panX - w / 2) * invZoom + w / 2;
+        const vy2 = (h - s.camera.panY - h / 2) * invZoom + h / 2;
+        const margin = 60;
 
         const q = searchRef.current.toLowerCase().trim();
 
-        // Draw edges (with viewport culling)
-        for (const e of edges) {
+        const drawEdges = s.edges;
+        const drawNodes = s.nodes;
+
+        for (const e of drawEdges) {
           const src = nodeMap.get(e.source);
           const tgt = nodeMap.get(e.target);
           if (!src || !tgt) continue;
 
-          // Viewport culling for edges
           if (!edgeInViewport(src, tgt, margin, vx1, vy1, vx2, vy2)) continue;
 
           const active =
@@ -166,12 +143,10 @@ export function useGraphSimulation(
           if (active) a = 0.82;
           else if (s.hovId || s.selId) a = 0.04;
           if (q && !mSrc && !mTgt) a = 0.025;
-          drawRope(ctx, e, src, tgt, s.time, a, active, s.zoom);
+          drawRope(ctx, e, src, tgt, s.time, a, active, s.camera.zoom);
         }
 
-        // Draw nodes (with viewport culling)
-        for (const n of nodes) {
-          // Viewport culling
+        for (const n of drawNodes) {
           if (!isInViewport(n.x, n.y, margin, vx1, vy1, vx2, vy2)) continue;
 
           const hov = n.id === s.hovId;
@@ -187,7 +162,7 @@ export function useGraphSimulation(
             a = connected ? 0.75 : 0.2;
           }
           if (q && !match) a = 0.07;
-          drawKnot(ctx, n, s.time, hov, sel, a, s.zoom);
+          drawKnot(ctx, n, s.time, hov, sel, a, s.camera.zoom);
         }
 
         ctx.restore();
@@ -203,11 +178,12 @@ export function useGraphSimulation(
         w: number,
         h: number,
       ) {
+        const s = sessionRef.current;
         const isMobile = w < 768;
         const quoteSize = isMobile ? Math.max(16, TEXT.introQuote.size * 0.7) : TEXT.introQuote.size;
         const subSize = isMobile ? Math.max(11, TEXT.introSub.size * 0.8) : TEXT.introSub.size;
         const ctaSize = isMobile ? Math.max(10, TEXT.introCta.size * 0.85) : TEXT.introCta.size;
-        
+
         if (s.intro === "showing") {
           ctx.fillStyle = composeRgba(COLOR.introBg);
           ctx.fillRect(0, 0, w, h);
@@ -215,9 +191,8 @@ export function useGraphSimulation(
           ctx.textBaseline = "middle";
           ctx.fillStyle = composeRgba(COLOR.introText);
           ctx.font = composeFont(TEXT.introQuote, quoteSize);
-          
+
           if (isMobile) {
-            // Mobile: split quote into 3 lines
             ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40);
             ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16);
             ctx.fillText('ya sabe, pero nunca te dijo."', w / 2, h / 2 + 8);
@@ -229,10 +204,10 @@ export function useGraphSimulation(
             );
             ctx.fillText('pero nunca te dijo."', w / 2, h / 2 + 10);
           }
-          
+
           ctx.font = composeFont(TEXT.introSub, subSize);
           ctx.fillStyle = composeRgba(COLOR.introSub);
-          
+
           if (isMobile) {
             ctx.fillText(
               "Explora. Cada nodo es una puerta.",
@@ -251,7 +226,7 @@ export function useGraphSimulation(
               h / 2 + 50,
             );
           }
-          
+
           ctx.font = composeFont(TEXT.introCta, ctaSize);
           ctx.fillStyle = composeRgba(COLOR.introCta);
           ctx.fillText("[ toca para comenzar ]", w / 2, h / 2 + (isMobile ? 100 : 84));
@@ -276,7 +251,7 @@ export function useGraphSimulation(
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = composeFont(TEXT.introQuote, quoteSize);
-            
+
             if (isMobile) {
               ctx.fillText('"Trama es el mapa', w / 2, h / 2 - 40);
               ctx.fillText('de lo que tu universidad', w / 2, h / 2 - 16);
@@ -294,6 +269,10 @@ export function useGraphSimulation(
       }
     }, containerRef.current!);
 
-    return () => instance.remove();
-  }, [containerRef, nodes, edges, searchRef, stateRef]);
+    return () => {
+      const sim = sessionRef.current.simulation as d3.Simulation<TNode, undefined>;
+      sim?.stop();
+      instance.remove();
+    };
+  }, [containerRef, sessionRef, searchRef, dataVersion]);
 }
