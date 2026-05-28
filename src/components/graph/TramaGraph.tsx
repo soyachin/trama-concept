@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
 import { UI_COLOR, toReactStyle } from "../../config/typography";
 import { assignAreaColors } from "../../lib/tokens";
-import { fetchQuipus, fetchQuipuGraph, getDummyQuipuGraph } from "../../data/quipus";
+import { fetchQuipus, fetchQuipuGraph } from "../../data/quipus";
 import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
 import { QuipuSelector } from "../ui/QuipuSelector";
@@ -77,16 +77,9 @@ export function TramaGraph() {
           edges: data.edges.filter(e => !e.synthetic).length,
         });
       } catch {
-        console.warn("API unavailable, using fallback quipu data");
-        const data = getDummyQuipuGraph();
-        if (cancelled) return;
-        assignAreaColors(data.groups);
-        setNodes(data.nodes);
-        setEdges(data.edges);
-        setStats({
-          nodes: data.nodes.filter(n => !n.synthetic).length,
-          edges: data.edges.filter(e => !e.synthetic).length,
-        });
+        // fetchQuipuGraph uses fixture fallback internally
+        if (!cancelled) setLoading(false);
+        return;
       } finally {
         if (!cancelled) setLoading(false);
       }
