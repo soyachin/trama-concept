@@ -1,9 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import type { TNode, TEdge, QuipuSummary } from "../../types/graph";
+import type { TNode, QuipuSummary } from "../../types/graph";
 import { UI_COLOR, toReactStyle } from "../../config/typography";
-import { assignAreaColors } from "../../lib/tokens";
-import { fetchQuipus, fetchQuipuGraph } from "../../data/quipus";
-import { useGraphSimulation, type SimulationState } from "./useGraphSimulation";
+import { fetchQuipus } from "../../data/quipus";
+import { useQuipuSession } from "../../hooks/useQuipuSession";
+import { useGraphSimulation } from "./useGraphSimulation";
 import { useGraphInteraction } from "./useGraphInteraction";
 import { QuipuSelector } from "../ui/QuipuSelector";
 import { DesktopLayout } from "../desktop/DesktopLayout";
@@ -31,16 +31,16 @@ export function TramaGraph() {
 
   const [quipus, setQuipus] = useState<QuipuSummary[]>([]);
   const [activeQuipuId, setActiveQuipuId] = useState<string>(DEFAULT_QUIPU_ID);
-  const [nodes, setNodes] = useState<TNode[]>([]);
-  const [edges, setEdges] = useState<TEdge[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ nodes: 0, edges: 0 });
-  
+
+  const { sessionRef, loading, stats, dataVersion, enrichedNode, detailLoading } = useQuipuSession(activeQuipuId, panelNode?.id ?? null);
+
+  const displayNode = enrichedNode ?? panelNode;
+
   // Platform detection - single source of truth
-  const [isMobile, setIsMobile] = useState(() => 
+  const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
-  
+
   useEffect(() => {
     const m = window.matchMedia('(max-width: 767px)');
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
@@ -62,57 +62,16 @@ export function TramaGraph() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await fetchQuipuGraph(activeQuipuId);
-        if (cancelled) return;
-        assignAreaColors(data.groups);
-        setNodes(data.nodes);
-        setEdges(data.edges);
-        setStats({
-          nodes: data.nodes.filter(n => !n.synthetic).length,
-          edges: data.edges.filter(e => !e.synthetic).length,
-        });
-      } catch {
-        // fetchQuipuGraph uses fixture fallback internally
-        if (!cancelled) setLoading(false);
-        return;
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [activeQuipuId]);
-
-  const stateRef = useRef<SimulationState>({
-    time: 0,
-    panX: 0,
-    panY: 0,
-    zoom: 1,
-    selId: null,
-    hovId: null,
-    intro: "showing",
-    introSec: 0,
-    dissolve: 0,
-    dragging: false,
-    dStartX: 0,
-    dStartY: 0,
-    dragNode: null,
-    simulation: null,
-  });
-
-  // Build adjacency + edge lookup once. Excluye edges sintéticas (raíz →
-  // área → nodo) del panel de conexiones — son estructurales del quipu,
-  // no relaciones semánticas del individuo.
+  // Build adjacency + edge lookup once. Excluye edges sintéticas del
+  // panel de conexiones — son estructurales del quipu, no relaciones
+  // semánticas del individuo.
   const edgeIndex = useRef(new Map<string, { predicate: string; id: string; label: string }[]>());
   useEffect(() => {
+    const session = sessionRef.current;
     const idx = new Map<string, { predicate: string; id: string; label: string }[]>();
     const nodeMap = new Map<string, TNode>();
-    for (const n of nodes) nodeMap.set(n.id, n);
-    for (const e of edges) {
+    for (const n of session.nodes) nodeMap.set(n.id, n);
+    for (const e of session.edges) {
       if (e.synthetic) continue;
       const srcLabel = nodeMap.get(e.source)?.label ?? '';
       const tgtLabel = nodeMap.get(e.target)?.label ?? '';
@@ -122,15 +81,15 @@ export function TramaGraph() {
       idx.get(e.target)!.push({ predicate: e.predicate, id: e.source, label: srcLabel });
     }
     edgeIndex.current = idx;
-  }, [nodes, edges]);
+  }, [dataVersion]);
 
   const getConns = useCallback(
     (id: string) => edgeIndex.current.get(id) ?? [],
     [],
   );
 
-  useGraphSimulation(containerRef, nodes, edges, searchRef, stateRef);
-  useGraphInteraction(containerRef, nodes, stateRef, setPanelNode);
+  useGraphSimulation(containerRef, sessionRef, searchRef, dataVersion);
+  useGraphInteraction(containerRef, sessionRef, setPanelNode, dataVersion);
 
   if (loading) {
     return (
@@ -159,7 +118,8 @@ export function TramaGraph() {
 
   const infoPanel = (
     <DesktopInfoPanel
-      node={panelNode}
+      node={displayNode}
+      loading={detailLoading}
       onClose={() => setPanelNode(null)}
       getConns={getConns}
     />
@@ -167,7 +127,8 @@ export function TramaGraph() {
 
   const mobileInfoPanel = (
     <MobileInfoPanel
-      node={panelNode}
+      node={displayNode}
+      loading={detailLoading}
       onClose={() => setPanelNode(null)}
       getConns={getConns}
     />

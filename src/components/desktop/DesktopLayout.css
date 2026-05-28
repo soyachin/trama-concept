@@ -233,6 +233,24 @@
   word-break: break-all;
 }
 
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg) 25%,
+    color-mix(in srgb, var(--color-fg) 8%, var(--color-bg)) 50%,
+    var(--color-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Desktop Search */
 .desktop-search {
   background: color-mix(in srgb, var(--color-bg) 62%, transparent);

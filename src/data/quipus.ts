@@ -1,5 +1,5 @@
 import type { QuipuSummary } from '../types/graph'
-import type { ApiQuipuGraph } from './adapter'
+import type { ApiQuipuGraph, ApiResourceDetail } from './adapter'
 import { adaptQuipuGraph } from './adapter'
 import rawFixture from './fixtures/quipu-social.json'
 
@@ -23,4 +23,10 @@ export async function fetchQuipuGraph(quipuId: string) {
   } catch {
     return adaptQuipuGraph(rawFixture as ApiQuipuGraph)
   }
+}
+
+export async function fetchNodeDetail(slug: string, endpoint: string): Promise<ApiResourceDetail> {
+  const res = await fetch(`${API_BASE}/${endpoint}/${slug}`)
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
 }

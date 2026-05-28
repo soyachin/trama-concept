@@ -1,26 +1,25 @@
 import { useEffect, useRef } from "react";
-import type { TNode } from "../../types/graph";
-import type { SimulationState } from "./useGraphSimulation";
+import type { TNode, ExplorationSession } from "../../types/graph";
 
 const IDLE_ALPHA = 0.008;
 const DRAG_ALPHA = 0.35;
 const MIN_ZOOM = 0.22;
 const MAX_ZOOM = 3.8;
 const DRAG_THRESHOLD = 5;
-const TOUCH_TAP_THRESHOLD = 25; // Distancia máxima para considerar un tap
+const TOUCH_TAP_THRESHOLD = 25;
 const FLY_TO_DURATION = 400;
 const FLY_TO_ZOOM = 1.4;
 
 function toGraph(
   mx: number,
   my: number,
-  s: SimulationState,
+  s: ExplorationSession,
   width: number,
   height: number,
 ): [number, number] {
   return [
-    (mx - s.panX - width / 2) / s.zoom + width / 2,
-    (my - s.panY - height / 2) / s.zoom + height / 2,
+    (mx - s.camera.panX - width / 2) / s.camera.zoom + width / 2,
+    (my - s.camera.panY - height / 2) / s.camera.zoom + height / 2,
   ];
 }
 
@@ -28,7 +27,7 @@ function hitTest(
   mx: number,
   my: number,
   nodes: TNode[],
-  s: SimulationState,
+  s: ExplorationSession,
   canvasW: number,
   canvasH: number,
 ): TNode | null {
@@ -46,18 +45,16 @@ function clampZoom(z: number): number {
 }
 
 function flyTo(
-  s: SimulationState,
+  s: ExplorationSession,
   targetNode: TNode,
   canvasW: number,
   canvasH: number,
   isMobile = false,
 ) {
-  const startPanX = s.panX;
-  const startPanY = s.panY;
-  const startZoom = s.zoom;
+  const startPanX = s.camera.panX;
+  const startPanY = s.camera.panY;
+  const startZoom = s.camera.zoom;
 
-  // En móvil con bottom sheet, centrar el nodo en el área visible superior
-  // (aprox 30% desde arriba) para que no quede tapado por el panel
   const visibleCenterY = isMobile ? canvasH * 0.3 : canvasH / 2;
 
   const endPanX = -(targetNode.x - canvasW / 2) * FLY_TO_ZOOM;
@@ -71,9 +68,9 @@ function flyTo(
     const t = Math.min(1, elapsed / FLY_TO_DURATION);
     const ease = 1 - (1 - t) * (1 - t);
 
-    s.panX = startPanX + (endPanX - startPanX) * ease;
-    s.panY = startPanY + (endPanY - startPanY) * ease;
-    s.zoom = startZoom + (endZoom - startZoom) * ease;
+    s.camera.panX = startPanX + (endPanX - startPanX) * ease;
+    s.camera.panY = startPanY + (endPanY - startPanY) * ease;
+    s.camera.zoom = startZoom + (endZoom - startZoom) * ease;
 
     if (t < 1) requestAnimationFrame(step);
   }
@@ -82,9 +79,9 @@ function flyTo(
 
 export function useGraphInteraction(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  nodes: TNode[],
-  stateRef: React.MutableRefObject<SimulationState>,
+  sessionRef: React.MutableRefObject<ExplorationSession>,
   setPanelNode: (node: TNode | null) => void,
+  dataVersion: number,
 ) {
   const prevMouseRef = useRef({ x: 0, y: 0 });
   const nodeDragActiveRef = useRef(false);
@@ -92,7 +89,6 @@ export function useGraphInteraction(
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const s = stateRef.current;
 
     const getCanvas = () => el.querySelector("canvas");
 
@@ -116,21 +112,20 @@ export function useGraphInteraction(
       ];
     };
 
-    // ── Mouse: hover ──────────────────────────────────────────
     const onMouseMove = (e: MouseEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
-      // Don't update hover during drag operations to prevent rope flickering
       if (s.dragNode || s.dragging) return;
       const [mx, my] = canvasCoords(e);
       const cv = getCanvas();
       if (!cv) return;
-      const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
+      const n = hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight);
       s.hovId = n ? n.id : null;
       el.style.cursor = n ? "pointer" : "grab";
     };
 
-    // ── Mouse: down ───────────────────────────────────────────
     const onMouseDown = (e: MouseEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") {
         s.intro = "dissolving";
         return;
@@ -139,7 +134,7 @@ export function useGraphInteraction(
       prevMouseRef.current = { x: mx, y: my };
       const cv = getCanvas();
       if (!cv) return;
-      const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
+      const n = hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight);
       if (n) {
         s.dragNode = n;
         n.fx = n.x;
@@ -147,7 +142,8 @@ export function useGraphInteraction(
         s.dStartX = mx;
         s.dStartY = my;
         nodeDragActiveRef.current = false;
-        s.simulation?.alphaTarget(DRAG_ALPHA).restart();
+        const sim = s.simulation as import("d3-force").Simulation<TNode, undefined>;
+        sim?.alphaTarget(DRAG_ALPHA).restart();
       } else {
         s.dragging = false;
         s.dStartX = mx;
@@ -156,15 +152,16 @@ export function useGraphInteraction(
       }
     };
 
-    // ── Mouse: up ─────────────────────────────────────────────
     const onMouseUp = (e: MouseEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
       const [mx, my] = canvasCoords(e);
 
       if (s.dragNode) {
         s.dragNode.fx = null;
         s.dragNode.fy = null;
-        s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
+        const sim = s.simulation as import("d3-force").Simulation<TNode, undefined>;
+        sim?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
         const wasDragged = nodeDragActiveRef.current;
         const releasedNode = s.dragNode;
         s.dragNode = null;
@@ -185,7 +182,7 @@ export function useGraphInteraction(
         if (!s.dragging) {
           const cv = getCanvas();
           if (!cv) return;
-          const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
+          const n = hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight);
           if (n) {
             if (s.selId === n.id) {
               s.selId = null;
@@ -205,8 +202,8 @@ export function useGraphInteraction(
       }
     };
 
-    // ── Mouse: drag (move) ────────────────────────────────────
     const onDrag = (e: MouseEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
       if (!(e.buttons & 1)) return;
       const [mx, my] = canvasCoords(e);
@@ -223,8 +220,8 @@ export function useGraphInteraction(
           }
         }
         if (nodeDragActiveRef.current) {
-          s.dragNode.fx! += movedX / s.zoom;
-          s.dragNode.fy! += movedY / s.zoom;
+          s.dragNode.fx! += movedX / s.camera.zoom;
+          s.dragNode.fy! += movedY / s.camera.zoom;
           s.dragNode.x = s.dragNode.fx!;
           s.dragNode.y = s.dragNode.fy!;
           el.style.cursor = "grabbing";
@@ -236,38 +233,38 @@ export function useGraphInteraction(
           s.dragging = true;
         }
         if (s.dragging) {
-          s.panX += movedX;
-          s.panY += movedY;
+          s.camera.panX += movedX;
+          s.camera.panY += movedY;
           el.style.cursor = "grabbing";
         }
       }
     };
 
-    // ── Mouse: wheel (zoom) ───────────────────────────────────
     const onWheel = (e: WheelEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
       e.preventDefault();
       const [mx, my] = canvasCoords(e);
       const cv = getCanvas();
       if (!cv) return;
 
-      const oldZoom = s.zoom;
+      const oldZoom = s.camera.zoom;
       const delta = -e.deltaY * 0.001;
-      s.zoom = clampZoom(s.zoom + delta);
-      const scale = s.zoom / oldZoom;
+      s.camera.zoom = clampZoom(s.camera.zoom + delta);
+      const scale = s.camera.zoom / oldZoom;
 
-      s.panX = mx - scale * (mx - s.panX);
-      s.panY = my - scale * (my - s.panY);
+      s.camera.panX = mx - scale * (mx - s.camera.panX);
+      s.camera.panY = my - scale * (my - s.camera.panY);
     };
 
-    // ── Mouse: double-click (zoom to node) ────────────────────
     const onDblClick = (e: MouseEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
       e.preventDefault();
       const [mx, my] = canvasCoords(e);
       const cv = getCanvas();
       if (!cv) return;
-      const n = hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight);
+      const n = hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight);
       if (n) {
         s.selId = n.id;
         setPanelNode(n);
@@ -285,8 +282,8 @@ export function useGraphInteraction(
     let touchIsPan = false;
     let touchMoved = false;
 
-    // ── Touch: start ──────────────────────────────────────────
     const onTouchStart = (e: TouchEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") {
         s.intro = "dissolving";
         return;
@@ -305,15 +302,15 @@ export function useGraphInteraction(
         touchMoved = false;
         const cv = getCanvas();
         const n = cv
-          ? hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight)
+          ? hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight)
           : null;
         if (n) {
           touchDragNode = n;
           n.fx = n.x;
           n.fy = n.y;
           touchIsPan = false;
-          s.simulation?.alphaTarget(DRAG_ALPHA).restart();
-          // Prevenir scroll del navegador cuando tocamos un nodo
+          const sim = s.simulation as import("d3-force").Simulation<TNode, undefined>;
+          sim?.alphaTarget(DRAG_ALPHA).restart();
           e.preventDefault();
         } else {
           touchDragNode = null;
@@ -324,8 +321,8 @@ export function useGraphInteraction(
       }
     };
 
-    // ── Touch: move ───────────────────────────────────────────
     const onTouchMove = (e: TouchEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
 
       if (e.touches.length === 2) {
@@ -338,11 +335,11 @@ export function useGraphInteraction(
 
         if (lastTouchDist > 0) {
           const scale = dist / lastTouchDist;
-          s.zoom = clampZoom(s.zoom * scale);
+          s.camera.zoom = clampZoom(s.camera.zoom * scale);
         }
 
-        s.panX += cx - lastTouchX;
-        s.panY += cy - lastTouchY;
+        s.camera.panX += cx - lastTouchX;
+        s.camera.panY += cy - lastTouchY;
 
         lastTouchDist = dist;
         lastTouchX = cx;
@@ -352,7 +349,6 @@ export function useGraphInteraction(
         const deltaX = e.touches[0].clientX - lastTouchX;
         const deltaY = e.touches[0].clientY - lastTouchY;
 
-        // Calcular distancia total desde el inicio
         const totalDx = mx - touchStartX;
         const totalDy = my - touchStartY;
         const totalDist = Math.hypot(totalDx, totalDy);
@@ -364,14 +360,14 @@ export function useGraphInteraction(
         if (touchMoved) {
           if (touchDragNode) {
             e.preventDefault();
-            touchDragNode.fx! += deltaX / s.zoom;
-            touchDragNode.fy! += deltaY / s.zoom;
+            touchDragNode.fx! += deltaX / s.camera.zoom;
+            touchDragNode.fy! += deltaY / s.camera.zoom;
             touchDragNode.x = touchDragNode.fx!;
             touchDragNode.y = touchDragNode.fy!;
           } else if (touchIsPan) {
             e.preventDefault();
-            s.panX += deltaX;
-            s.panY += deltaY;
+            s.camera.panX += deltaX;
+            s.camera.panY += deltaY;
           }
         }
 
@@ -380,11 +376,10 @@ export function useGraphInteraction(
       }
     };
 
-    // ── Touch: end ────────────────────────────────────────────
     const onTouchEnd = (e: TouchEvent) => {
+      const s = sessionRef.current;
       if (s.intro !== "done") return;
 
-      // Calcular distancia total del movimiento para determinar si fue un tap
       let totalDist = 0;
       if (e.changedTouches.length > 0) {
         const t = e.changedTouches[0];
@@ -392,13 +387,13 @@ export function useGraphInteraction(
         totalDist = Math.hypot(mx - touchStartX, my - touchStartY);
       }
 
-      // Es un tap si no se movió significativamente
       const isTap = !touchMoved || totalDist < TOUCH_TAP_THRESHOLD;
 
       if (touchDragNode) {
         touchDragNode.fx = null;
         touchDragNode.fy = null;
-        s.simulation?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
+        const sim = s.simulation as import("d3-force").Simulation<TNode, undefined>;
+        sim?.alpha(0.3).alphaTarget(IDLE_ALPHA).restart();
       }
 
       if (e.changedTouches.length === 1 && e.touches.length === 0 && isTap) {
@@ -406,7 +401,7 @@ export function useGraphInteraction(
         const [mx, my] = touchCoords(t);
         const cv = getCanvas();
         const n = cv
-          ? hitTest(mx, my, nodes, s, cv.clientWidth, cv.clientHeight)
+          ? hitTest(mx, my, s.nodes, s, cv.clientWidth, cv.clientHeight)
           : null;
         if (n) {
           if (s.selId === n.id) {
@@ -449,5 +444,5 @@ export function useGraphInteraction(
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [containerRef, nodes, stateRef, setPanelNode]);
+  }, [containerRef, sessionRef, setPanelNode, dataVersion]);
 }
