@@ -76,7 +76,7 @@ export function drawRope(
   e: TEdge, src: TNode, tgt: TNode,
   t: number, alpha: number, active: boolean, zoom: number,
 ) {
-  const cfg = ROPE_CONFIGS[e.predicate] ?? ROPE_CONFIGS.dictadoPor
+  const cfg = ROPE_CONFIGS[e.predicate] ?? ROPE_CONFIGS.dictadoPor!
 
   const ropeRole = active ? COLOR.ropeActive : COLOR.ropeBase
   let ropeRgb: [number, number, number]
@@ -232,7 +232,7 @@ export function drawKnot(
         const threshold = 1 - (dist - R - 2) / 14
         const bx = ((Math.floor((gx - n.x + 30) / GS)) % 4 + 4) % 4
         const by = ((Math.floor((gy - n.y + 30) / GS)) % 4 + 4) % 4
-        if (BAYER[by][bx] < threshold) {
+        if ((BAYER[by]?.[bx] ?? 1) < threshold) {
           ctx.fillStyle = `rgba(${cr},${cg},${cb},0.38)`
           ctx.fillRect(gx, gy, 2, 2)
         }

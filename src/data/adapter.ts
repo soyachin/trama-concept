@@ -60,7 +60,7 @@ export function adaptQuipuGraph(raw: ApiQuipuGraph): QuipuGraph {
     description: '',
     tags: [],
     metadata: n.metadata as Record<string, NodeMetaValue>,
-    groupKey: n.group_key ?? undefined,
+    ...(n.group_key ? { groupKey: n.group_key } : {}),
     x: 0, y: 0, vx: 0, vy: 0,
   }))
 

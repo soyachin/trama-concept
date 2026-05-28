@@ -67,6 +67,16 @@ VITE_API_URL=https://api.trama.example.com/api/v1 pnpm dev
 
 ---
 
+## architecture
+
+documentación completa en [`docs/architecture/`](docs/architecture/):
+
+- [data-flow.md](docs/architecture/data-flow.md) — flujo de datos React ↔ p5, contrato de acceso a `sessionRef`
+- [domain-model.md](docs/architecture/domain-model.md) — modelo de dominio: `TNode`, `TEdge`, `QuipuGraph`, `ExplorationSession`
+- [file-structure.md](docs/architecture/file-structure.md) — mapa del repo con descripción por directorio
+
+---
+
 ## estructura
 
 ```

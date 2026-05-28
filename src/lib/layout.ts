@@ -34,10 +34,10 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
     const ang = (i / areaHeaders.length) * Math.PI * 2 - Math.PI / 2
     const x = cx + Math.cos(ang) * R_AREA
     const y = cy + Math.sin(ang) * R_AREA
-    areaHeaders[i].x = x
-    areaHeaders[i].y = y
-    areaHeaders[i].vx = 0
-    areaHeaders[i].vy = 0
+    areaHeaders[i]!.x = x
+    areaHeaders[i]!.y = y
+    areaHeaders[i]!.vx = 0
+    areaHeaders[i]!.vy = 0
   }
 
   // Posicionar nodos de datos como un arco alrededor de su nudo cabecera,
@@ -46,8 +46,7 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
   for (const n of nodes) {
     if (n.synthetic) continue
     if (!n.groupKey) continue
-    byArea[n.groupKey] ??= []
-    byArea[n.groupKey].push(n)
+    ;(byArea[n.groupKey] ??= []).push(n)
   }
   const headerByArea = new Map(areaHeaders.map(h => [h.groupKey!, h]))
   for (const [area, members] of Object.entries(byArea)) {
@@ -60,10 +59,10 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
       const t = members.length === 1 ? 0 : (j / (members.length - 1)) - 0.5
       const ang = baseAng + t * fanWidth
       const r = ring + ((j % 3) - 1) * 22
-      members[j].x = cx + Math.cos(ang) * (R_AREA + r)
-      members[j].y = cy + Math.sin(ang) * (R_AREA + r)
-      members[j].vx = (Math.random() - 0.5) * 0.2
-      members[j].vy = (Math.random() - 0.5) * 0.2
+      members[j]!.x = cx + Math.cos(ang) * (R_AREA + r)
+      members[j]!.y = cy + Math.sin(ang) * (R_AREA + r)
+      members[j]!.vx = (Math.random() - 0.5) * 0.2
+      members[j]!.vy = (Math.random() - 0.5) * 0.2
     }
   }
 
@@ -71,18 +70,17 @@ function initQuipuLayout(nodes: TNode[], cx: number, cy: number) {
   const orphans = nodes.filter(n => !n.synthetic && !n.groupKey)
   const step = (Math.PI * 2) / Math.max(orphans.length, 1)
   for (let j = 0; j < orphans.length; j++) {
-    orphans[j].x = cx + Math.cos(step * j) * 600
-    orphans[j].y = cy + Math.sin(step * j) * 600
-    orphans[j].vx = (Math.random() - 0.5) * 0.2
-    orphans[j].vy = (Math.random() - 0.5) * 0.2
+    orphans[j]!.x = cx + Math.cos(step * j) * 600
+    orphans[j]!.y = cy + Math.sin(step * j) * 600
+    orphans[j]!.vx = (Math.random() - 0.5) * 0.2
+    orphans[j]!.vy = (Math.random() - 0.5) * 0.2
   }
 }
 
 function initLegacyLayout(nodes: TNode[], cx: number, cy: number) {
   const groups: Record<string, TNode[]> = {}
   for (const n of nodes) {
-    if (!groups[n.type]) groups[n.type] = []
-    groups[n.type].push(n)
+    ;(groups[n.type] ??= []).push(n)
   }
   const order = [
     'OrganizacionEstudiantil', 'Club', 'Actividad',
@@ -92,22 +90,22 @@ function initLegacyLayout(nodes: TNode[], cx: number, cy: number) {
   ]
   const radii = [185, 230, 300, 380, 470, 570, 680, 780, 880, 980, 1080]
   for (let i = 0; i < order.length; i++) {
-    const g = groups[order[i]] ?? []
-    const R = radii[i], step = (Math.PI * 2) / Math.max(g.length, 1)
+    const g = groups[order[i]!] ?? []
+    const R = radii[i]!, step = (Math.PI * 2) / Math.max(g.length, 1)
     const off = (i * Math.PI) / 3.5
     for (let j = 0; j < g.length; j++) {
-      g[j].x  = cx + Math.cos(step * j + off) * R
-      g[j].y  = cy + Math.sin(step * j + off) * R
-      g[j].vx = (Math.random() - 0.5) * 0.2
-      g[j].vy = (Math.random() - 0.5) * 0.2
+      g[j]!.x  = cx + Math.cos(step * j + off) * R
+      g[j]!.y  = cy + Math.sin(step * j + off) * R
+      g[j]!.vx = (Math.random() - 0.5) * 0.2
+      g[j]!.vy = (Math.random() - 0.5) * 0.2
     }
   }
   const remaining = nodes.filter(n => !order.includes(n.type))
   const step = (Math.PI * 2) / Math.max(remaining.length, 1)
   for (let j = 0; j < remaining.length; j++) {
-    remaining[j].x = cx + Math.cos(step * j) * 1200
-    remaining[j].y = cy + Math.sin(step * j) * 1200
-    remaining[j].vx = (Math.random() - 0.5) * 0.2
-    remaining[j].vy = (Math.random() - 0.5) * 0.2
+    remaining[j]!.x = cx + Math.cos(step * j) * 1200
+    remaining[j]!.y = cy + Math.sin(step * j) * 1200
+    remaining[j]!.vx = (Math.random() - 0.5) * 0.2
+    remaining[j]!.vy = (Math.random() - 0.5) * 0.2
   }
 }

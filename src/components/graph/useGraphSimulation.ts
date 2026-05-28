@@ -338,7 +338,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
             for (let ty = 0; ty < h; ty += TILE) {
               const bx = Math.floor(tx / TILE) % 4
               const by = Math.floor(ty / TILE) % 4
-              if (s.dissolve < BAYER[by][bx]) ctx.fillRect(tx, ty, TILE, TILE)
+              if (s.dissolve < (BAYER[by]?.[bx] ?? 0)) ctx.fillRect(tx, ty, TILE, TILE)
             }
           }
           const ta = Math.max(0, 1 - s.dissolve * 5)
@@ -573,13 +573,15 @@ export function useGraphSimulation(config: P5CanvasConfig) {
       }
       if (e.touches.length === 2) {
         touchDragNode = null
-        const dx = e.touches[1].clientX - e.touches[0].clientX
-        const dy = e.touches[1].clientY - e.touches[0].clientY
+        const t0 = e.touches[0]!, t1 = e.touches[1]!
+        const dx = t1.clientX - t0.clientX
+        const dy = t1.clientY - t0.clientY
         lastTouchDist = Math.hypot(dx, dy)
-        lastTouchX = (e.touches[0].clientX + e.touches[1].clientX) / 2
-        lastTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        lastTouchX = (t0.clientX + t1.clientX) / 2
+        lastTouchY = (t0.clientY + t1.clientY) / 2
       } else if (e.touches.length === 1) {
-        const [mx, my] = touchCoords(e.touches[0])
+        const t = e.touches[0]!
+        const [mx, my] = touchCoords(t)
         touchStartX = mx
         touchStartY = my
         touchMoved = false
@@ -598,8 +600,8 @@ export function useGraphSimulation(config: P5CanvasConfig) {
         } else {
           touchDragNode = null
           touchIsPan = true
-          lastTouchX = e.touches[0].clientX
-          lastTouchY = e.touches[0].clientY
+          lastTouchX = t.clientX
+          lastTouchY = t.clientY
         }
       }
     }
@@ -610,11 +612,12 @@ export function useGraphSimulation(config: P5CanvasConfig) {
 
       if (e.touches.length === 2) {
         e.preventDefault()
-        const dx = e.touches[1].clientX - e.touches[0].clientX
-        const dy = e.touches[1].clientY - e.touches[0].clientY
+        const t0 = e.touches[0]!, t1 = e.touches[1]!
+        const dx = t1.clientX - t0.clientX
+        const dy = t1.clientY - t0.clientY
         const dist = Math.hypot(dx, dy)
-        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2
-        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        const cx = (t0.clientX + t1.clientX) / 2
+        const cy = (t0.clientY + t1.clientY) / 2
 
         if (lastTouchDist > 0) {
           const scale = dist / lastTouchDist
@@ -628,9 +631,10 @@ export function useGraphSimulation(config: P5CanvasConfig) {
         lastTouchX = cx
         lastTouchY = cy
       } else if (e.touches.length === 1) {
-        const [mx, my] = touchCoords(e.touches[0])
-        const deltaX = e.touches[0].clientX - lastTouchX
-        const deltaY = e.touches[0].clientY - lastTouchY
+        const t = e.touches[0]!
+        const [mx, my] = touchCoords(t)
+        const deltaX = t.clientX - lastTouchX
+        const deltaY = t.clientY - lastTouchY
 
         const totalDx = mx - touchStartX
         const totalDy = my - touchStartY
@@ -654,8 +658,8 @@ export function useGraphSimulation(config: P5CanvasConfig) {
           }
         }
 
-        lastTouchX = e.touches[0].clientX
-        lastTouchY = e.touches[0].clientY
+        lastTouchX = t.clientX
+        lastTouchY = t.clientY
       }
     }
 
@@ -665,7 +669,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
 
       let totalDist = 0
       if (e.changedTouches.length > 0) {
-        const t = e.changedTouches[0]
+        const t = e.changedTouches[0]!
         const [mx, my] = touchCoords(t)
         totalDist = Math.hypot(mx - touchStartX, my - touchStartY)
       }
@@ -680,7 +684,7 @@ export function useGraphSimulation(config: P5CanvasConfig) {
       }
 
       if (e.changedTouches.length === 1 && e.touches.length === 0 && isTap) {
-        const t = e.changedTouches[0]
+        const t = e.changedTouches[0]!
         const [mx, my] = touchCoords(t)
         const cv = getCanvasEl()
         const n = cv

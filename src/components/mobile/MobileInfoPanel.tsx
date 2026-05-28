@@ -91,7 +91,7 @@ export function MobileInfoPanel({ node, loading, onClose, getConns }: MobileInfo
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
-        startY = e.touches[0].clientY
+        startY = e.touches[0]!.clientY
         currentY = startY
         startState = sheetState
         isDragging = true
@@ -102,7 +102,7 @@ export function MobileInfoPanel({ node, loading, onClose, getConns }: MobileInfo
     const onTouchMove = (e: TouchEvent) => {
       if (!isDragging || e.touches.length !== 1) return
       
-      currentY = e.touches[0].clientY
+      currentY = e.touches[0]!.clientY
       const deltaY = currentY - startY
       
       if (startState === 'collapsed' && deltaY > 0) {

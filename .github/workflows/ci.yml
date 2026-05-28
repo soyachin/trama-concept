@@ -26,5 +26,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Type check & Build
-        run: pnpm build
+      - name: Type check
+        run: pnpm exec tsc --noEmit -p config/tsconfig.app.json
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: vite build

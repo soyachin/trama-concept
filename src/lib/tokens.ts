@@ -47,7 +47,7 @@ function tokenName(key: string): string {
 }
 
 function pickAreaColor(idx: number): string {
-  if (idx < AREA_PALETTE.length) return AREA_PALETTE[idx]
+  if (idx < AREA_PALETTE.length) return AREA_PALETTE[idx]!
   const hue = ((idx + 1) * 47) % 360
   return `oklch(70% 0.15 ${hue})`
 }
@@ -56,7 +56,7 @@ export function computeAreaColors(groups: { key: string }[]): AreaColorMap {
   const entries: AreaColorEntry[] = []
 
   for (let i = 0; i < groups.length; i++) {
-    const g = groups[i]
+    const g = groups[i]!
     const varName = tokenName(g.key)
     const cssValue = pickAreaColor(i)
     const parsed = parse(cssValue)
