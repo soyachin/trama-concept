@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState, useCallback } from 'react'
+import { useMemo, useRef, useEffect, useState, useCallback, startTransition } from 'react'
 import type { TNode, NodeMetaValue, RelatedRef } from '../../types/graph'
 
 const PRED_LABELS: Record<string, string> = {
@@ -72,12 +72,10 @@ export function MobileInfoPanel({ node, loading, onClose, getConns }: MobileInfo
   )
 
   useEffect(() => {
-    if (node) {
-      setSheetState('collapsed')
-    } else {
-      setSheetState('closed')
-    }
-  }, [node?.id])
+    startTransition(() => {
+      setSheetState(node ? 'collapsed' : 'closed')
+    })
+  }, [node])
 
   // Swipe gestures
   useEffect(() => {

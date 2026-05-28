@@ -80,7 +80,7 @@ export function TramaGraph() {
       idx.get(e.target)!.push({ predicate: e.predicate, id: e.source, label: srcLabel });
     }
     edgeIndex.current = idx;
-  }, [dataVersion]);
+  }, [dataVersion, sessionRef]);
 
   const getConns = useCallback(
     (id: string) => edgeIndex.current.get(id) ?? [],

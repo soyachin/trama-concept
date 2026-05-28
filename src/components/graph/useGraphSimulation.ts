@@ -720,10 +720,12 @@ export function useGraphSimulation(config: P5CanvasConfig) {
     el.addEventListener("touchmove", onTouchMove, { passive: false })
     el.addEventListener("touchend", onTouchEnd, { passive: true })
 
+    const snap = sessionRef.current
+
     return () => {
-      const sim = sessionRef.current.simulation as d3.Simulation<TNode, undefined>
+      const sim = snap.simulation as d3.Simulation<TNode, undefined>
       sim?.stop()
-      sessionRef.current.simulation = null
+      snap.simulation = null
       instance.remove()
 
       el.removeEventListener("mousemove", onMouseMove)

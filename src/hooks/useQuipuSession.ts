@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, startTransition } from 'react'
 import type { TNode, ExplorationSession } from '../types/graph'
 import { fetchQuipuGraph, fetchNodeDetail } from '../data/quipus'
 import { computeAreaColors, applyAreaColors } from '../lib/tokens'
@@ -36,7 +36,7 @@ export function useQuipuSession(quipuId: string, selectedNodeId: string | null) 
     let cancelled = false
 
     sessionRef.current = createInitialSession(quipuId)
-    setLoading(true)
+    startTransition(() => setLoading(true))
 
     ;(async () => {
       const data = await fetchQuipuGraph(quipuId)
@@ -65,7 +65,7 @@ export function useQuipuSession(quipuId: string, selectedNodeId: string | null) 
     let cancelled = false
 
     if (!selectedNodeId) {
-      setEnrichedNode(null)
+      startTransition(() => setEnrichedNode(null))
       return
     }
 
